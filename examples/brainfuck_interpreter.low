@@ -1,0 +1,74 @@
+var memory = [0]
+
+var program = prompt("Code to Run: ")
+
+var i = 0
+var m = 0
+
+fn fixMemory() {
+  while(m >= memory.length) {
+    memory.add(0)
+  }
+  while(m < 0) {
+    memory.insert(0, 0)
+    m = m + 1
+  }
+}
+
+while(i < program.length) {
+  var c = program.substring(i, i+1)
+  i = i + 1
+
+  if(c == "+") {
+    memory[m] = (memory[m] + 1) % 256
+  }
+  if(c == "-") {
+    memory[m] = (memory[m] - 1) % 256
+  }
+  if(c == "<") {
+    m = m - 1
+    fixMemory()
+  }
+  if(c == ">") {
+    m = m + 1
+    fixMemory()
+  }
+  if(c == ".") {
+    write(char(memory[m]))
+  }
+  if(c == ",") {
+    memory[m] = char(read())
+  }
+  if(c == "[" && memory[m] == 0) {
+    var bias = 1
+
+    while(bias > 0) {
+      i = i + 1
+      c = program.substring(i, i+1)
+
+      if(c == "[") {
+        bias = bias + 1
+      }
+
+      if(c == "]") {
+        bias = bias - 1
+      }
+    }
+  }
+  if(c == "]" && memory[m] > 0) {
+    var bias = 1
+
+    while(bias > 0) {
+      i = i - 1
+      c = program.substring(i-1, i)
+
+      if(c == "[") {
+        bias = bias - 1
+      }
+
+      if(c == "]") {
+        bias = bias + 1
+      }
+    }
+  }
+}

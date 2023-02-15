@@ -60,7 +60,7 @@ class LowIncludeNode extends LowAST {
 
   @override
   void rawset(LowContext context, value) {
-    // TODO: implement rawset
+    rawget(context);
   }
 
   @override

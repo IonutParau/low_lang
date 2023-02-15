@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:low_lang/ast/ast.dart';
 import 'package:low_lang/ast/define.dart';
-import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/interop.dart';
 

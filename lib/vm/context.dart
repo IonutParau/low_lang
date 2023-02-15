@@ -112,3 +112,22 @@ class LowContext {
     _stack[i % _stack.length] = value;
   }
 }
+
+// TODO: Implement a compiler to some form of IR or bytecode
+class LowCompilerContext {
+  List<String> _stackMirror = [];
+
+  void push() => _stackMirror.add("");
+  void define(String name) => _stackMirror.add(name);
+  void name(String name) => _stackMirror.last = name;
+  bool isLocal(String name) => _stackMirror.contains(name);
+  int stackIndex(String name) => -1 - _stackMirror.indexOf(name);
+
+  LowCompilerContext linkedCopy([List<String>? startingLocals]) {
+    final copy = LowCompilerContext();
+
+    copy._stackMirror = startingLocals == null ? [..._stackMirror] : [...startingLocals];
+
+    return copy;
+  }
+}

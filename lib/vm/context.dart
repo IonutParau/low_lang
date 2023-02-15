@@ -24,8 +24,8 @@ class LowCommonStatus {
 
 class LowContext {
   Map<String, dynamic> _globals = {};
-  Map<String, dynamic> _extern = {};
   Map<String, LowVar> _locals = {};
+  List _stack = [];
   var status = LowCommonStatus(LowMemoryStatus.running);
   LowStackTrace stackTrace;
   LowVM vm;
@@ -55,14 +55,6 @@ class LowContext {
     return _globals[name];
   }
 
-  void setExtern(String name, dynamic val) {
-    _extern[name] = val;
-  }
-
-  dynamic getExtern(String name) {
-    return _extern[name];
-  }
-
   void defineLocal(String name, dynamic val) {
     _locals[name] = LowVar(name, val);
   }
@@ -74,20 +66,18 @@ class LowContext {
   dynamic get(String name) {
     if (_locals.containsKey(name)) return readLocal(name);
     if (_globals.containsKey(name)) return getGlobal(name);
-    if (_extern.containsKey(name)) return getExtern(name);
   }
 
   void set(String name, dynamic v) {
     if (_locals.containsKey(name)) return setLocal(name, v);
     if (_globals.containsKey(name)) return setGlobal(name, v);
-    if (_extern.containsKey(name)) return setExtern(name, v);
     _globals[name] = v;
   }
 
   LowContext lexicallyScopedCopy({List<String>? onlyPassThrough, bool copyStatus = false}) {
     final lm = LowContext(stackTrace, vm);
 
-    lm._extern = _extern;
+    lm._stack = [..._stack];
     lm._globals = _globals;
     if (onlyPassThrough == null) {
       lm._locals = {..._locals};
@@ -103,5 +93,22 @@ class LowContext {
     }
 
     return lm;
+  }
+
+  void push(dynamic value) => _stack.add(value);
+  dynamic pop() => _stack.removeLast();
+  dynamic remove(int i) {
+    if (_stack.isEmpty) return;
+    return _stack.removeAt(i % _stack.length);
+  }
+
+  dynamic getAt(int i) {
+    if (_stack.isEmpty) return;
+    return _stack[i % _stack.length];
+  }
+
+  void setAt(int i, dynamic value) {
+    if (_stack.isEmpty) return;
+    _stack[i % _stack.length] = value;
   }
 }

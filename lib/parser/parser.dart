@@ -699,8 +699,6 @@ class LowParser {
       l.add(parseLine(tmp, lines, LowParserMode.data));
     }
 
-    l = l.reversed.toList();
-
     while (true) {
       var didSomething = false;
       for (var ops in opOrder) {
@@ -715,7 +713,7 @@ class LowParser {
             final LowAST next = l[i - 1];
             final LowAST last = nl.removeAt(0);
             i--; // Skip next
-            nl.insert(0, LowHandleOp(op, last, [next], last.position));
+            nl.insert(0, LowHandleOp(op, next, [last], last.position));
             didSomething = true;
           } else {
             nl.insert(0, thing);

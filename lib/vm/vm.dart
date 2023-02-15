@@ -21,14 +21,18 @@ class LowVM {
   final Map<String, LowLibrary> libraries = {};
 
   LowVM() {
-    _rootContext = LowContext(LowStackTrace(), this);
+    _init();
+  }
+
+  void _init() {
+    _rootContext = LowContext(LowStackTrace(), this, "");
     _rootContext.setGlobal("EXEC", null);
     _rootContext.setGlobal("ARGS", []);
   }
 
   dynamic runCode(String code, String filename) {
     final parsed = _parser.parseCode(code, filename);
-    final context = _rootContext.lexicallyScopedCopy();
+    final context = _rootContext.lexicallyScopedCopy(filePath: filename);
 
     parsed.run(context);
 

@@ -4,6 +4,7 @@ import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/errors.dart';
 import 'package:low_lang/vm/interop.dart';
 import 'package:low_lang/vm/vm.dart';
+import 'package:path/path.dart' as path;
 
 enum LowIncludeMode {
   returned,
@@ -18,16 +19,18 @@ class LowIncludeNode extends LowAST {
   LowIncludeNode(this.value, this.mode, this.identifier, super.position);
 
   dynamic getLibrary(LowContext context) {
-    final val = LowInteropHandler.convertToString(context, position, value.get(context));
+    var val = LowInteropHandler.convertToString(context, position, value.get(context));
     if (context.vm.libraries[val] != null) {
       return context.vm.libraries[val]?.call(context.vm);
     }
 
-    final f = File(val);
+    if (Platform.isWindows) val = val.replaceAll('/', '\\');
+
+    final f = File(path.isAbsolute(val) ? val : path.join(path.dirname(context.filePath), val));
 
     if (!f.existsSync()) throw LowRuntimeError("Included file path $val does not exist", position, context.stackTrace);
 
-    return context.vm.runCode(f.readAsStringSync(), val);
+    return context.vm.runCode(f.readAsStringSync(), f.path);
   }
 
   @override

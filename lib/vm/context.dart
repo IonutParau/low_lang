@@ -29,8 +29,9 @@ class LowContext {
   var status = LowCommonStatus(LowMemoryStatus.running);
   LowStackTrace stackTrace;
   LowVM vm;
+  String filePath;
 
-  LowContext(this.stackTrace, this.vm);
+  LowContext(this.stackTrace, this.vm, this.filePath);
 
   void returnValue(dynamic value) {
     status.status = LowMemoryStatus.returned;
@@ -74,8 +75,8 @@ class LowContext {
     _globals[name] = v;
   }
 
-  LowContext lexicallyScopedCopy({List<String>? onlyPassThrough, bool copyStatus = false}) {
-    final lm = LowContext(stackTrace, vm);
+  LowContext lexicallyScopedCopy({List<String>? onlyPassThrough, bool copyStatus = false, String? filePath}) {
+    final lm = LowContext(stackTrace, vm, filePath ?? this.filePath);
 
     lm._stack = [..._stack];
     lm._globals = _globals;

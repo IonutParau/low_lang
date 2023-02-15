@@ -1,3 +1,5 @@
+include "some_library/d.low"
+
 var memory = [0]
 
 var program = prompt("Code to Run: ")

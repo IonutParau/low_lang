@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:low_lang/low_lang.dart';
+import 'package:low_lang/vm/errors.dart';
 
 void main(List<String> arguments) {
   if (arguments.isEmpty) {
@@ -40,5 +41,13 @@ void main(List<String> arguments) {
   vm.defineGlobal("EXEC", Platform.executable);
   vm.defineGlobal("ARGS", arguments.sublist(1));
 
-  vm.runCode(f.readAsStringSync(), f.path);
+  try {
+    vm.runCode(f.readAsStringSync(), f.path);
+  } catch (e) {
+    if (e is LowRuntimeError || e is LowParsingFailure) {
+      print(e);
+      return;
+    }
+    rethrow;
+  }
 }

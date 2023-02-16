@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:low_lang/parser/token.dart';
+import 'package:low_lang/stdlib/stdlib.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/errors.dart';
 import 'package:low_lang/vm/interop.dart';
@@ -212,6 +213,21 @@ Map<String, dynamic> lowCoreAPI(LowVM vm) {
       minArgLength(args, 1);
 
       exit(args[0] is int ? args[0] : 0);
+    },
+    "os":
+        Platform.isWindows ? "windows" : (Platform.isLinux ? "linux" : "macos"),
+    "shell": (List args, LowContext context, LowTokenPosition position) {
+      minArgLength(args, 1);
+
+      final cmd = LowInteropHandler.convertToString(
+        context,
+        position,
+        args.first,
+      );
+
+      final result = lowRunCommand(cmd);
+
+      return result.exitCode;
     },
     ...types,
   };

@@ -303,16 +303,20 @@ class LowParser {
               lines);
         }
         if (argtoken.length > 1) {
-          if (argtoken[1].value != ":")
+          if (argtoken[1].value != ":") {
             throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
-          if (argtoken.length == 2)
+              "Please separate argument name and argument type by a :",
+              argtoken[1].position,
+              lines,
+            );
+          }
+          if (argtoken.length == 2) {
             throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+              "Please separate argument name and argument type by a :",
+              argtoken[1].position,
+              lines,
+            );
+          }
 
           argtypes
               .add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
@@ -352,16 +356,20 @@ class LowParser {
               lines);
         }
         if (argtoken.length > 1) {
-          if (argtoken[1].value != ":")
+          if (argtoken[1].value != ":") {
             throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
-          if (argtoken.length == 2)
+              "Please separate argument name and argument type by a :",
+              argtoken[1].position,
+              lines,
+            );
+          }
+          if (argtoken.length == 2) {
             throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+              "Please separate argument name and argument type by a :",
+              argtoken[1].position,
+              lines,
+            );
+          }
 
           argtypes
               .add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
@@ -631,11 +639,13 @@ class LowParser {
             identifier = null;
             mode = LowIncludeMode.globals;
           } else if (token.value == "as" && i == l.length - 1) {
-            if (l.last.type != LowPreprocessedTokenType.identifier)
+            if (l.last.type != LowPreprocessedTokenType.identifier) {
               throw LowParsingFailure(
-                  "Global library message must be an identifier",
-                  l.last.position,
-                  lines);
+                "Global library message must be an identifier",
+                l.last.position,
+                lines,
+              );
+            }
             identifier = l.last.value;
             mode = LowIncludeMode.globals;
           } else {
@@ -705,8 +715,9 @@ class LowParser {
           vars.add(token.value);
           if (i < definition.length - 1) {
             final next = definition[i + 1];
-            if (next.value != "in" && next.value != ",")
+            if (next.value != "in" && next.value != ",") {
               throw LowParsingFailure("Expected in or ,", next.position, lines);
+            }
             if (next.value == ",") i++;
             if (next.value == "in") {
               i++;
@@ -864,8 +875,9 @@ class LowParser {
   bool containsOperators(List<LowPreprocessedToken> tokens,
       {List<String> except = const []}) {
     for (var token in tokens) {
-      if (allOps.contains(token.value) && !except.contains(token.value))
+      if (allOps.contains(token.value) && !except.contains(token.value)) {
         return true;
+      }
     }
 
     return false;

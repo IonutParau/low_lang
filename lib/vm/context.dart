@@ -75,7 +75,10 @@ class LowContext {
     _globals[name] = v;
   }
 
-  LowContext lexicallyScopedCopy({List<String>? onlyPassThrough, bool copyStatus = false, String? filePath}) {
+  LowContext lexicallyScopedCopy(
+      {List<String>? onlyPassThrough,
+      bool copyStatus = false,
+      String? filePath}) {
     final lm = LowContext(stackTrace, vm, filePath ?? this.filePath);
 
     lm._stack = [..._stack];
@@ -120,6 +123,18 @@ class LowContext {
 }
 
 // TODO: Implement a compiler to some form of IR or bytecode
+
+enum LowCompilationMode {
+  /// Means: Compile to IR that will give us that data
+  data,
+
+  /// Means: Compile to IR that will run that code
+  run,
+
+  /// Means: Compile to IR that will handle that set that to the top value
+  modify,
+}
+
 class LowCompilerContext {
   List<String> _stackMirror = [];
 
@@ -127,12 +142,14 @@ class LowCompilerContext {
   void define(String name) => _stackMirror.add(name);
   void name(String name) => _stackMirror.last = name;
   bool isLocal(String name) => _stackMirror.contains(name);
-  int stackIndex(String name) => _stackMirror.indexOf(name) - _stackMirror.length;
+  int stackIndex(String name) =>
+      _stackMirror.indexOf(name) - _stackMirror.length;
 
   LowCompilerContext linkedCopy([List<String>? startingLocals]) {
     final copy = LowCompilerContext();
 
-    copy._stackMirror = startingLocals == null ? [..._stackMirror] : [...startingLocals];
+    copy._stackMirror =
+        startingLocals == null ? [..._stackMirror] : [...startingLocals];
 
     return copy;
   }

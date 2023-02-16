@@ -1,8 +1,11 @@
 import 'dart:io';
 
 import 'package:low_lang/low_lang.dart';
+import 'package:low_lang/stdlib/stdlib.dart';
 
 void main(List<String> arguments) {
+  lowRunCommand("echo Test");
+
   if (arguments.isEmpty) {
     print("Usage: ${Platform.executable} (path) <args>");
     return;

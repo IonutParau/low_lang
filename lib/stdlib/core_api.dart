@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:low_lang/parser/token.dart';
+import 'package:low_lang/stdlib/stdlib.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/errors.dart';
 import 'package:low_lang/vm/interop.dart';
@@ -30,7 +31,9 @@ Map<String, dynamic> lowCoreAPI(LowVM vm) {
         if (l is! List) return false;
 
         for (var val in l) {
-          if (!LowInteropHandler.matchesType(context, position, val, args[0])) return false;
+          if (!LowInteropHandler.matchesType(context, position, val, args[0])) {
+            return false;
+          }
         }
 
         return true;
@@ -42,21 +45,57 @@ Map<String, dynamic> lowCoreAPI(LowVM vm) {
       return (List subargs, LowContext context, LowTokenPosition position) {
         minArgLength(subargs, 1);
 
-        return LowInteropHandler.handleOperator(context, position, subargs[0], "==", [args[0]]);
+        return LowInteropHandler.handleOperator(
+            context, position, subargs[0], "==", [args[0]]);
       };
     },
+    "enum": (List args, LowContext context, LowTokenPosition position) {
+      minArgLength(args, 1);
+
+      if (args[0] is! List) {
+        throw LowRuntimeError(
+          "enum(values) expects values to be a list",
+          position,
+          context.stackTrace,
+        );
+      }
+
+      final enumVals = args[0];
+
+      return (List args, LowContext context, LowTokenPosition position) {
+        minArgLength(args, 1);
+        final val = args[0];
+
+        for (var v in enumVals) {
+          if (LowInteropHandler.truthful(
+            context,
+            position,
+            LowInteropHandler.handleOperator(
+              context,
+              position,
+              v,
+              "==",
+              [val],
+            ),
+          )) return true;
+        }
+        return false;
+      };
+    }
   };
 
   return {
     "not": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 
-      return !LowInteropHandler.truthful(context, LowTokenPosition("core.low", 1, 1), args[0]);
+      return !LowInteropHandler.truthful(
+          context, LowTokenPosition("core.low", 1, 1), args[0]);
     },
     "toString": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 
-      return LowInteropHandler.convertToString(context, LowTokenPosition("core.low", 1, 1), args[0]);
+      return LowInteropHandler.convertToString(
+          context, LowTokenPosition("core.low", 1, 1), args[0]);
     },
     "char": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
@@ -74,14 +113,16 @@ Map<String, dynamic> lowCoreAPI(LowVM vm) {
     "toInt": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 
-      final str = LowInteropHandler.convertToString(context, LowTokenPosition("core.low", 1, 1), args[0]);
+      final str = LowInteropHandler.convertToString(
+          context, LowTokenPosition("core.low", 1, 1), args[0]);
 
       return int.tryParse(str);
     },
     "toDouble": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 
-      final str = LowInteropHandler.convertToString(context, LowTokenPosition("core.low", 1, 1), args[0]);
+      final str = LowInteropHandler.convertToString(
+          context, LowTokenPosition("core.low", 1, 1), args[0]);
 
       return double.tryParse(str);
     },
@@ -100,11 +141,13 @@ Map<String, dynamic> lowCoreAPI(LowVM vm) {
       final max = args[1];
 
       if (min is! int) {
-        throw LowRuntimeError("randInt(min, max) expects min to be an int", position, context.stackTrace);
+        throw LowRuntimeError("randInt(min, max) expects min to be an int",
+            position, context.stackTrace);
       }
 
       if (max is! int) {
-        throw LowRuntimeError("randInt(min, max) expects max to be an int", position, context.stackTrace);
+        throw LowRuntimeError("randInt(min, max) expects max to be an int",
+            position, context.stackTrace);
       }
 
       return rng.nextInt(max - min) + min;
@@ -115,33 +158,39 @@ Map<String, dynamic> lowCoreAPI(LowVM vm) {
     "print": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 
-      final str = LowInteropHandler.convertToString(context, LowTokenPosition("core.low", 1, 1), args[0]);
+      final str = LowInteropHandler.convertToString(
+          context, LowTokenPosition("core.low", 1, 1), args[0]);
 
       print(str);
     },
     "write": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 
-      final str = LowInteropHandler.convertToString(context, LowTokenPosition("core.low", 1, 1), args[0]);
+      final str = LowInteropHandler.convertToString(
+          context, LowTokenPosition("core.low", 1, 1), args[0]);
 
       stdout.write(str);
     },
     "error": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 
-      final str = LowInteropHandler.convertToString(context, LowTokenPosition("core.low", 1, 1), args[0]);
+      final str = LowInteropHandler.convertToString(
+          context, LowTokenPosition("core.low", 1, 1), args[0]);
 
       throw LowRuntimeError(str, position, context.stackTrace);
     },
     "assert": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 3);
 
-      final v = LowInteropHandler.truthful(context, LowTokenPosition("core.low", 1, 1), args[0]);
-      final str = LowInteropHandler.convertToString(context, LowTokenPosition("core.low", 1, 1), args[1]);
+      final v = LowInteropHandler.truthful(
+          context, LowTokenPosition("core.low", 1, 1), args[0]);
+      final str = LowInteropHandler.convertToString(
+          context, LowTokenPosition("core.low", 1, 1), args[1]);
 
       if (!v) throw LowRuntimeError(str, position, context.stackTrace);
       if (args[2] != null) {
-        final out = LowInteropHandler.convertToString(context, LowTokenPosition("core.low", 1, 1), args[2]);
+        final out = LowInteropHandler.convertToString(
+            context, LowTokenPosition("core.low", 1, 1), args[2]);
         print(out);
         return out;
       }
@@ -151,7 +200,8 @@ Map<String, dynamic> lowCoreAPI(LowVM vm) {
     },
     "prompt": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
-      stdout.write(LowInteropHandler.convertToString(context, LowTokenPosition("core.low", 1, 1), args[0]));
+      stdout.write(LowInteropHandler.convertToString(
+          context, LowTokenPosition("core.low", 1, 1), args[0]));
       return stdin.readLineSync();
     },
     "typeOf": (List args, LowContext context, LowTokenPosition position) {
@@ -163,6 +213,21 @@ Map<String, dynamic> lowCoreAPI(LowVM vm) {
       minArgLength(args, 1);
 
       exit(args[0] is int ? args[0] : 0);
+    },
+    "os":
+        Platform.isWindows ? "windows" : (Platform.isLinux ? "linux" : "macos"),
+    "shell": (List args, LowContext context, LowTokenPosition position) {
+      minArgLength(args, 1);
+
+      final cmd = LowInteropHandler.convertToString(
+        context,
+        position,
+        args.first,
+      );
+
+      final result = lowRunCommand(cmd);
+
+      return result.exitCode;
     },
     ...types,
   };

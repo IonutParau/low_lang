@@ -52,17 +52,20 @@ class LowHandleOp extends LowAST {
     final v = left.get(context);
     final args = params.map((ast) => ast.get(context)).toList();
     if (opcode == "<=") {
-      final less = LowInteropHandler.handleOperator(context, position, v, "<", args);
+      final less =
+          LowInteropHandler.handleOperator(context, position, v, "<", args);
       if (LowInteropHandler.truthful(context, position, less)) return true;
       return LowInteropHandler.handleOperator(context, position, v, "==", args);
     }
     if (opcode == ">=") {
-      final less = LowInteropHandler.handleOperator(context, position, v, ">", args);
+      final less =
+          LowInteropHandler.handleOperator(context, position, v, ">", args);
       if (LowInteropHandler.truthful(context, position, less)) return true;
       return LowInteropHandler.handleOperator(context, position, v, "==", args);
     }
     if (opcode == "!=") {
-      return !LowInteropHandler.truthful(context, position, LowInteropHandler.handleOperator(context, position, v, "==", args));
+      return !LowInteropHandler.truthful(context, position,
+          LowInteropHandler.handleOperator(context, position, v, "==", args));
     }
     if (opcode == "&&") {
       if (!LowInteropHandler.truthful(context, position, v)) return false;
@@ -73,7 +76,8 @@ class LowHandleOp extends LowAST {
       return LowInteropHandler.truthful(context, position, args.first);
     }
 
-    return LowInteropHandler.handleOperator(context, position, left.get(context), opcode, args);
+    return LowInteropHandler.handleOperator(
+        context, position, left.get(context), opcode, args);
   }
 
   @override
@@ -84,7 +88,21 @@ class LowHandleOp extends LowAST {
   @override
   void rawset(LowContext context, value) {
     if (opcode == "[]") {
-      LowInteropHandler.handleOperator(context, position, left.get(context), "[]=", [...params.map((p) => p.get(context)), value]);
+      LowInteropHandler.handleOperator(context, position, left.get(context),
+          "[]=", [...params.map((p) => p.get(context)), value]);
+      return;
+    }
+    if (opcode == ".") {
+      final v = left.get(context);
+      final fieldToken = params.first as LowVariableNode;
+
+      LowInteropHandler.writeField(
+        context,
+        position,
+        v,
+        fieldToken.name,
+        value,
+      );
       return;
     }
     throw UnsupportedError("You can not set the result of $opcode to a value");
@@ -92,7 +110,11 @@ class LowHandleOp extends LowAST {
 
   @override
   Set<String> dependencies(Set<String> toIgnore) {
-    return {...left.dependencies(toIgnore), ...params.fold<Set<String>>(<String>{}, (current, param) => current..addAll(param.dependencies(toIgnore)))};
+    return {
+      ...left.dependencies(toIgnore),
+      ...params.fold<Set<String>>(<String>{},
+          (current, param) => current..addAll(param.dependencies(toIgnore)))
+    };
   }
 
   @override

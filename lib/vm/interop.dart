@@ -943,6 +943,10 @@ class LowInteropHandler {
         }
       }
 
+      if (opcode == "==") {
+        return value == args.first;
+      }
+
       throw LowRuntimeError("Objects do not support the $opcode operator", tokenPosition, context.stackTrace);
     }
 
@@ -976,6 +980,9 @@ class LowInteropHandler {
         value[idx] = val;
         return null;
       }
+      if (opcode == "==") {
+        return value == args.first;
+      }
       throw LowRuntimeError("Buffers do not support the $opcode operator", tokenPosition, context.stackTrace);
     }
 
@@ -1005,6 +1012,9 @@ class LowInteropHandler {
         value[idx] = val;
         return null;
       }
+      if (opcode == "==") {
+        return value == args.first;
+      }
       throw LowRuntimeError("Lists do not support the $opcode operator", tokenPosition, context.stackTrace);
     }
 
@@ -1023,10 +1033,16 @@ class LowInteropHandler {
         value[key] = val;
         return null;
       }
+      if (opcode == "==") {
+        return value == args.first;
+      }
       throw LowRuntimeError("Maps do not support the $opcode operator", tokenPosition, context.stackTrace);
     }
 
     if (value is LowFunction) {
+      if (opcode == "==") {
+        return value == args.first;
+      }
       throw LowRuntimeError("Functions do not support the $opcode operator", tokenPosition, context.stackTrace);
     }
 

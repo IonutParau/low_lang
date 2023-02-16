@@ -1,0 +1,65 @@
+fn buildTree(x) {
+  return x + 1
+}
+
+static bottomUpTre(y) {
+  if(y == 50) {
+    return buildTree(y) * 5
+  } else {
+    return buildTree(B(y-1)) * 5
+  }
+}
+
+print(B(51))
+
+return
+
+fn buildTree(left, right) {
+  return {left: left, right: right}
+}
+
+static bottomUpTree(depth) {
+  if(depth > 0) {
+    return buildTree(bottomUpTree(depth - 1), bottomUpTree(depth - 1))
+  } else {
+    return buildTree(null, null)
+  }
+}
+
+static itemCheck(node) {
+  if(node is null || node.left is null) {return 1}
+
+  return 1 + itemCheck(node.left) + itemCheck(node.right)
+}
+
+static work(iterations: int, depth: int) {
+  var check = 0
+
+  for(var i = 0; i < iterations; i = i + 1) {
+    check = check + itemCheck(bottomUpTree(depth));
+  }
+
+  print(toString(iterations) + " with a depth of " + toString(depth) + " resulted in " + toString(check) + " checks")
+}
+
+static runBenchmark(maxDepth: int) {
+  var stretchDepth = maxDepth + 1
+  var check = itemCheck(bottomUpTree(stretchDepth))
+  print("Stretch tree of depth " + toString(maxDepth) + " resulted in " + toString(check) + " checks")
+
+  var longLivedTree = bottomUpTree(maxDepth)
+
+  for(var depth = 4; depth <= maxDepth; depth = depth + 2) {
+    var iterations = (1 << maxDepth) - depth + 4
+    work(iterations, depth)
+  }
+
+  print("Long lived tree of depth " + toString(maxDepth) + " resulted in " + toString(check) + " checks")
+}
+
+var depth = 8
+
+var startTime = timeMS()
+runBenchmark(depth)
+var currTime = timeMS()
+print("Running benchmark with a depth of " + toString(depth) + " took " + toString(currTime - startTime) + "ms")

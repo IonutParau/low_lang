@@ -424,6 +424,10 @@ class LowParser {
       return LowReturnNode(value, tokens.first.position);
     }
 
+    if (tokens.length == 1 && tokens[0].value == "return") {
+      return LowReturnNode(LowNullNode(tokens.first.position), tokens.first.position);
+    }
+
     if (tokens.length == 3) {
       if (tokens[0].value == "if" && tokens[1].value == "()" && tokens[2].value == "{}") {
         final condition = parseLine(tokens[1].subtokens, lines, LowParserMode.data);

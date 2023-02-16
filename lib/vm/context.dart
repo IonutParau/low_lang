@@ -84,6 +84,11 @@ class LowContext {
       lm._locals = {..._locals};
     } else {
       for (var name in onlyPassThrough) {
+        if (name == "buildTree") {
+          print("Looking for Build Tree in $_locals");
+          print(_locals.containsKey(name));
+        }
+
         if (_locals.containsKey(name)) lm._locals[name] = _locals[name]!;
       }
     }

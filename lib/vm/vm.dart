@@ -1,5 +1,6 @@
 import 'package:low_lang/parser/parser.dart';
 import 'package:low_lang/parser/token.dart';
+import 'package:low_lang/stdlib/fs_api.dart';
 import 'package:low_lang/vm/stack_trace.dart';
 import 'package:low_lang/stdlib/stdlib.dart';
 
@@ -7,7 +8,8 @@ import 'context.dart';
 
 typedef LowObject = Map<String, dynamic>;
 
-typedef LowFunction = dynamic Function(List args, LowContext context, LowTokenPosition callerPosition);
+typedef LowFunction = dynamic Function(
+    List args, LowContext context, LowTokenPosition callerPosition);
 
 void minArgLength(List args, int min) {
   while (args.length < min) {
@@ -55,8 +57,10 @@ class LowVM {
     // Define libraries
     defineLibrary("low:core", lowCoreAPI);
     defineLibrary("low:math", lowMathAPI);
+    defineLibrary("low:fs", lowFileSysAPI);
 
     // Load core
     lowCoreAPI(this).forEach(defineGlobal);
+    defineGlobal("fs", lowFileSysAPI(this));
   }
 }

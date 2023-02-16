@@ -83,8 +83,8 @@ class LowDefineFunction extends LowAST {
   }
 }
 
-LowFunction createLowFunction(LowContext context, LowTokenPosition position, List<String> params, List<LowAST?> types, LowAST? returnType, LowAST body, List<String> dependencies) {
-  return (List args, LowContext oldCtx, LowTokenPosition callerPosition) {
+LowFunction createLowFunction(LowContext oldCtx, LowTokenPosition position, List<String> params, List<LowAST?> types, LowAST? returnType, LowAST body, List<String> dependencies) {
+  return (List args, LowContext context, LowTokenPosition callerPosition) {
     final context = oldCtx.lexicallyScopedCopy(copyStatus: true, onlyPassThrough: dependencies);
 
     for (var i = 0; i < params.length; i++) {

@@ -1,0 +1,61 @@
+if(ARGS.length == 0) {
+  ARGS.add("main.bf")
+}
+
+if(ARGS.length == 1) {
+  ARGS.add("gcc")
+}
+
+var code = fs.read(ARGS[0])
+var compiler = ARGS[1]
+
+var c_code = "
+#include <stdio.h>
+
+char array[30000] = {0};
+char *ptr = array;
+
+int main() {
+"
+
+var chars = code.split("")
+
+foreach(char in chars) {
+  if(char == ">") {
+    c_code = c_code + "\n++ptr;"
+  }
+  if(char == "<") {
+    c_code = c_code + "\n--ptr;"
+  }
+  if(char == "+") {
+    c_code = c_code + "\n++*ptr;"
+  }
+  if(char == "-") {
+    c_code = c_code + "\n--*ptr;"
+  }
+  if(char == ".") {
+    c_code = c_code + "\nputchar(*ptr);"
+  }
+  if(char == ",") {
+    c_code = c_code + "\n*ptr = getchar();"
+  }
+  if(char == "[") {
+    c_code = c_code + "\nwhile(*ptr) {"
+  }
+  if(char == "]") {
+    c_code = c_code + "\n}"
+  }
+}
+
+
+c_code = c_code + "\n}"
+
+static C_FILE = ARGS[0] + ".c"
+static OUTPUT = ARGS[0].substring(0, ARGS[0].length-3)
+if(os == "windows") {
+  OUTPUT = OUTPUT + ".exe"
+}
+
+fs.write(C_FILE, c_code)
+
+shell("gcc -o " + OUTPUT + " " + C_FILE)

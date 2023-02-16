@@ -7,9 +7,7 @@ class LowLexer {
     var inString = false;
     var escaping = false;
     final currPos = LowTokenPosition(fileName, 1, 0);
-    final l = <LowToken>[
-      LowToken("", LowTokenType.identifier, LowTokenPosition(fileName, 1, 1))
-    ];
+    final l = <LowToken>[LowToken("", LowTokenType.identifier, LowTokenPosition(fileName, 1, 1))];
 
     for (var i = 0; i < chars.length; i++) {
       final char = chars[i];
@@ -21,10 +19,10 @@ class LowLexer {
         currPos.charNumber++;
       }
 
-      if (char == " " && !escaping && !inString) {
+      if (char == " " && !inString) {
         l.add(LowToken("", LowTokenType.seperator, currPos.copy));
         continue;
-      } else if (char == "\t" && !escaping && !inString) {
+      } else if (char == "\t" && !inString) {
         l.add(LowToken("", LowTokenType.seperator, currPos.copy));
         continue;
       } else if (char == "\r") {
@@ -33,6 +31,10 @@ class LowLexer {
         inString = !inString;
       } else if (char == "\\" && !escaping) {
         escaping = true;
+        if (inString) {
+          l.last.value += char;
+        }
+        continue;
       }
 
       if (isSeperator(char) && !inString) {
@@ -53,8 +55,15 @@ class LowLexer {
       escaping = false;
     }
 
-    l.removeWhere((token) =>
-        token.value.replaceAll(" ", "").replaceAll("\t", "").isEmpty);
+    if (escaping) {
+      throw LowParsingFailure("Lexer: Unable to escape End Of File", l.last.position, str.split('\n'));
+    }
+
+    if (inString) {
+      throw LowParsingFailure("Lexer: Missing end of string", l.last.position, str.split('\n'));
+    }
+
+    l.removeWhere((token) => token.value.replaceAll(" ", "").replaceAll("\t", "").isEmpty);
 
     return handleTypes(handleEdgeCases(l), str.split("\n"));
   }
@@ -69,8 +78,7 @@ class LowLexer {
         final idx = i - n;
 
         if (idx < 0) {
-          return LowToken("", LowTokenType.identifier,
-              LowTokenPosition("out-of-bounds", 0, 0));
+          return LowToken("", LowTokenType.identifier, LowTokenPosition("out-of-bounds", 0, 0));
         } else {
           return faulty[idx];
         }
@@ -80,38 +88,28 @@ class LowLexer {
         final idx = i + n;
 
         if (idx >= faulty.length) {
-          return LowToken("", LowTokenType.identifier,
-              LowTokenPosition("out-of-bounds", 0, 0));
+          return LowToken("", LowTokenType.identifier, LowTokenPosition("out-of-bounds", 0, 0));
         } else {
           return faulty[idx];
         }
       }
 
-      if ((isSeperator(last(1).value) && last(1).value != ']') ||
-          isOperator(last(1).value)) {
-        if (token.value == "-" &&
-            int.tryParse(next(1).value) != null &&
-            next(2).value == "." &&
-            int.tryParse(next(3).value) != null) {
-          fixed.add(LowToken("-${next(1).value}.${next(3).value}",
-              LowTokenType.literal, token.position));
+      if ((isSeperator(last(1).value) && last(1).value != ']') || isOperator(last(1).value)) {
+        if (token.value == "-" && int.tryParse(next(1).value) != null && next(2).value == "." && int.tryParse(next(3).value) != null) {
+          fixed.add(LowToken("-${next(1).value}.${next(3).value}", LowTokenType.literal, token.position));
           i += 3;
           continue;
         }
 
         if (token.value == "-" && int.tryParse(next(1).value) != null) {
-          fixed.add(LowToken(
-              "-${next(1).value}", LowTokenType.literal, token.position));
+          fixed.add(LowToken("-${next(1).value}", LowTokenType.literal, token.position));
           i++;
           continue;
         }
       }
 
-      if (int.tryParse(token.value) != null &&
-          next(1).value == "." &&
-          int.tryParse(next(2).value) != null) {
-        fixed.add(LowToken("${token.value}.${next(2).value}",
-            LowTokenType.literal, token.position));
+      if (int.tryParse(token.value) != null && next(1).value == "." && int.tryParse(next(2).value) != null) {
+        fixed.add(LowToken("${token.value}.${next(2).value}", LowTokenType.literal, token.position));
         i += 2;
         continue;
       }
@@ -135,10 +133,7 @@ class LowLexer {
       } else if (isKeyword(token.value)) {
         token.type = LowTokenType.keyword;
       } else {
-        throw LowParsingFailure(
-            "Lexer can't figure out the type of ${token.value}",
-            token.position,
-            lines);
+        throw LowParsingFailure("Lexer can't figure out the type of ${token.value}", token.position, lines);
       }
     }
 

@@ -8,18 +8,17 @@ export 'math_api.dart';
 typedef LowLibrary = dynamic Function(LowVM vm);
 
 ProcessResult lowRunCommand(String cmd) {
-  // TODO: Make it somehow handle stdout
   if (Platform.isWindows) {
     return Process.runSync(
       r"C:\Windows\System32\cmd.exe",
       ["/c", cmd],
-      runInShell: true,
+      workingDirectory: Directory.current.path,
     );
   } else {
     return Process.runSync(
       "/bin/sh",
-      ["sh", "-c", cmd],
-      runInShell: true,
+      ["-c", cmd],
+      workingDirectory: Directory.current.path,
     );
   }
 }

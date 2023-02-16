@@ -1,0 +1,24 @@
+static C_FILE = "main.c"
+
+static C_CODE = "
+#include <stdio.h>
+
+int main() {
+  printf(\"Hello, world!\");
+  return 0;
+}
+"
+
+fs.write(C_FILE, C_CODE)
+
+// Note: Running a command in shell does not print what the command prints
+var result = shell("gcc -o c_helloworld main.c")
+print(result)
+
+if(result == 127) {
+  print("gcc was not found!")
+} else if(result != 0) {
+  print("Using gcc to compile C code failed!")
+} else {
+  print("Successfully generated an executable via gcc")
+}

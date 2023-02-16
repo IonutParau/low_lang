@@ -55,7 +55,6 @@ LowObject lowFileSysAPI(LowVM vm) {
       }
 
       final f = File(path);
-      if (!f.existsSync()) return;
       if (f.statSync().type == FileSystemEntityType.directory) {
         return;
       }
@@ -81,7 +80,6 @@ LowObject lowFileSysAPI(LowVM vm) {
       }
 
       final f = File(path);
-      if (!f.existsSync()) return;
       if (f.statSync().type == FileSystemEntityType.directory) {
         return;
       }
@@ -102,7 +100,7 @@ LowObject lowFileSysAPI(LowVM vm) {
       }
 
       final f = File(path);
-      if (!f.existsSync()) return;
+      if (!f.existsSync()) f.createSync();
       if (f.statSync().type == FileSystemEntityType.directory) {
         return;
       }
@@ -128,7 +126,7 @@ LowObject lowFileSysAPI(LowVM vm) {
       }
 
       final f = File(path);
-      if (!f.existsSync()) return;
+      if (!f.existsSync()) f.createSync();
       if (f.statSync().type == FileSystemEntityType.directory) {
         return;
       }
@@ -157,8 +155,7 @@ LowObject lowFileSysAPI(LowVM vm) {
           )
           .toList();
     },
-    "listRecursive":
-        (List args, LowContext context, LowTokenPosition position) {
+    "listRecursive": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 
       var path = LowInteropHandler.convertToString(context, position, args[0]);
@@ -206,8 +203,7 @@ LowObject lowFileSysAPI(LowVM vm) {
       if (!f.existsSync()) return null;
       return f.statSync().type == FileSystemEntityType.directory;
     },
-    "makeDirectory":
-        (List args, LowContext context, LowTokenPosition position) {
+    "makeDirectory": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 
       var path = LowInteropHandler.convertToString(context, position, args[0]);

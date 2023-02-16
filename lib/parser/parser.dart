@@ -24,21 +24,14 @@ class LowParser {
     final preprocessed = preprocessor.preprocess(lexed, sourceLines);
     final lines = splitByLines(preprocessed);
 
-    return LowCodeBody(
-        lines
-            .map((line) => parseLine(line, sourceLines, LowParserMode.topLevel))
-            .toList(),
-        LowTokenPosition(filename, 1, 1));
+    return LowCodeBody(lines.map((line) => parseLine(line, sourceLines, LowParserMode.topLevel)).toList(), LowTokenPosition(filename, 1, 1));
   }
 
-  List<List<LowPreprocessedToken>> splitByLines(
-      List<LowPreprocessedToken> tokens) {
-    return preprocessor.splitBySeperators(tokens, [';', '\n'],
-        removeEmptyLists: true);
+  List<List<LowPreprocessedToken>> splitByLines(List<LowPreprocessedToken> tokens) {
+    return preprocessor.splitBySeperators(tokens, [';', '\n'], removeEmptyLists: true);
   }
 
-  LowAST parseLine(List<LowPreprocessedToken> tokens, List<String> lines,
-      LowParserMode mode) {
+  LowAST parseLine(List<LowPreprocessedToken> tokens, List<String> lines, LowParserMode mode) {
     if (tokens.length == 1) {
       final token = tokens.first;
 
@@ -65,8 +58,7 @@ class LowParser {
       }
 
       if (token.value == "[]") {
-        final subnodes = preprocessor.splitBySeperators(token.subtokens, [','],
-            removeNewlines: true);
+        final subnodes = preprocessor.splitBySeperators(token.subtokens, [','], removeNewlines: true);
 
         if (subnodes.isNotEmpty) {
           if (subnodes.last.isEmpty) subnodes.removeLast();
@@ -76,10 +68,7 @@ class LowParser {
         for (var subnode in subnodes) {
           i++;
           if (subnode.isEmpty) {
-            throw LowParsingFailure(
-                "List Element #$i is an empty segment (unparsable)",
-                token.position,
-                lines);
+            throw LowParsingFailure("List Element #$i is an empty segment (unparsable)", token.position, lines);
           }
         }
 
@@ -92,8 +81,7 @@ class LowParser {
       }
 
       if (token.value == "@[]") {
-        final subnodes = preprocessor.splitBySeperators(token.subtokens, [','],
-            removeNewlines: true);
+        final subnodes = preprocessor.splitBySeperators(token.subtokens, [','], removeNewlines: true);
 
         if (subnodes.isNotEmpty) {
           if (subnodes.last.isEmpty) subnodes.removeLast();
@@ -103,24 +91,16 @@ class LowParser {
         for (var subnode in subnodes) {
           i++;
           if (subnode.isEmpty) {
-            throw LowParsingFailure(
-                "Buffer Element #$i is an empty segment (unparsable)",
-                token.position,
-                lines);
+            throw LowParsingFailure("Buffer Element #$i is an empty segment (unparsable)", token.position, lines);
           }
         }
 
-        return LowBufferNode(
-            subnodes
-                .map((line) => parseLine(line, lines, LowParserMode.data))
-                .toList(),
-            token.position);
+        return LowBufferNode(subnodes.map((line) => parseLine(line, lines, LowParserMode.data)).toList(), token.position);
       }
 
       if (token.value == "{}") {
         if (mode == LowParserMode.data) {
-          final subnodes = preprocessor
-              .splitBySeperators(token.subtokens, [','], removeNewlines: true);
+          final subnodes = preprocessor.splitBySeperators(token.subtokens, [','], removeNewlines: true);
 
           if (subnodes.isNotEmpty) {
             if (subnodes.last.isEmpty) subnodes.removeLast();
@@ -133,56 +113,36 @@ class LowParser {
             i++;
 
             if (subnode.isEmpty) {
-              throw LowParsingFailure(
-                  "Object Pair #$i is an empty segment (unparsable)",
-                  token.position,
-                  lines);
+              throw LowParsingFailure("Object Pair #$i is an empty segment (unparsable)", token.position, lines);
             }
 
             if (subnode.length < 3) {
-              throw LowParsingFailure(
-                  "Object Pair #$i is invalid", token.position, lines);
+              throw LowParsingFailure("Object Pair #$i is invalid", token.position, lines);
             }
 
-            var isStringField = subnode[0].value.startsWith('"') &&
-                subnode[0].value.endsWith('"');
+            var isStringField = subnode[0].value.startsWith('"') && subnode[0].value.endsWith('"');
 
-            if (subnode[0].type != LowPreprocessedTokenType.identifier &&
-                !isStringField) {
-              throw LowParsingFailure(
-                  "Object Pair #$i's key is not an identifier or string field",
-                  token.position,
-                  lines);
+            if (subnode[0].type != LowPreprocessedTokenType.identifier && !isStringField) {
+              throw LowParsingFailure("Object Pair #$i's key is not an identifier or string field", token.position, lines);
             }
 
             if (subnode[1].value != ":") {
-              throw LowParsingFailure(
-                  "Object Pair #$i's key should end with an : and then specify the value",
-                  token.position,
-                  lines);
+              throw LowParsingFailure("Object Pair #$i's key should end with an : and then specify the value", token.position, lines);
             }
 
-            o[isStringField
-                    ? parseStringLiteral(subnode[0], lines)
-                    : subnode[0].value] =
-                parseLine(subnode.sublist(2), lines, LowParserMode.data);
+            o[isStringField ? parseStringLiteral(subnode[0], lines) : subnode[0].value] = parseLine(subnode.sublist(2), lines, LowParserMode.data);
           }
 
           return LowObjectNode(o, token.position);
         } else if (mode == LowParserMode.topLevel) {
           final sublines = splitByLines(token.subtokens);
 
-          return LowCodeBody(
-              sublines
-                  .map((line) => parseLine(line, lines, LowParserMode.topLevel))
-                  .toList(),
-              token.position);
+          return LowCodeBody(sublines.map((line) => parseLine(line, lines, LowParserMode.topLevel)).toList(), token.position);
         }
       }
 
       if (token.value == "@{}") {
-        final subnodes = preprocessor.splitBySeperators(token.subtokens, [','],
-            removeNewlines: true);
+        final subnodes = preprocessor.splitBySeperators(token.subtokens, [','], removeNewlines: true);
 
         if (subnodes.isNotEmpty) {
           if (subnodes.last.isEmpty) subnodes.removeLast();
@@ -194,10 +154,7 @@ class LowParser {
         for (var subnode in subnodes) {
           i++;
           if (subnode.isEmpty) {
-            throw LowParsingFailure(
-                "Map Pair #$i is an empty segment (unparsable)",
-                token.position,
-                lines);
+            throw LowParsingFailure("Map Pair #$i is an empty segment (unparsable)", token.position, lines);
           }
 
           var readingKey = true;
@@ -218,28 +175,18 @@ class LowParser {
           }
 
           if (readingKey) {
-            throw LowParsingFailure(
-                "Map Pair #$i's value is not defined. Please make sure you ended the key signature with :",
-                token.position,
-                lines);
+            throw LowParsingFailure("Map Pair #$i's value is not defined. Please make sure you ended the key signature with :", token.position, lines);
           }
 
           if (keySegs.isEmpty) {
-            throw LowParsingFailure(
-                "Map Pair #$i's key is an empty segment (unparsable)",
-                token.position,
-                lines);
+            throw LowParsingFailure("Map Pair #$i's key is an empty segment (unparsable)", token.position, lines);
           }
 
           if (valSegs.isEmpty) {
-            throw LowParsingFailure(
-                "Map Pair #$i's value is an empty segment (unparsable)",
-                token.position,
-                lines);
+            throw LowParsingFailure("Map Pair #$i's value is an empty segment (unparsable)", token.position, lines);
           }
 
-          m[parseLine(keySegs, lines, LowParserMode.data)] =
-              parseLine(valSegs, lines, LowParserMode.data);
+          m[parseLine(keySegs, lines, LowParserMode.data)] = parseLine(valSegs, lines, LowParserMode.data);
         }
 
         return LowMapNode(m, token.position);
@@ -260,35 +207,24 @@ class LowParser {
       }
     }
 
-    if (tokens.length >= 4 &&
-        tokens[0].value == "var" &&
-        tokens[1].type == LowPreprocessedTokenType.identifier &&
-        tokens[2].value == "=") {
+    if (tokens.length >= 4 && tokens[0].value == "var" && tokens[1].type == LowPreprocessedTokenType.identifier && tokens[2].value == "=") {
       final name = tokens[1].value;
       final value = parseLine(tokens.sublist(3), lines, LowParserMode.data);
 
       return LowDefineVariable(name, value, false, tokens.first.position);
     }
 
-    if (tokens.length >= 4 &&
-        tokens[0].value == "static" &&
-        tokens[1].type == LowPreprocessedTokenType.identifier &&
-        tokens[2].value == "=") {
+    if (tokens.length >= 4 && tokens[0].value == "static" && tokens[1].type == LowPreprocessedTokenType.identifier && tokens[2].value == "=") {
       final name = tokens[1].value;
       final value = parseLine(tokens.sublist(3), lines, LowParserMode.data);
 
       return LowDefineVariable(name, value, true, tokens.first.position);
     }
 
-    if (tokens.length == 4 &&
-        tokens[0].value == "fn" &&
-        tokens[1].type == LowPreprocessedTokenType.identifier &&
-        tokens[2].value == "()" &&
-        tokens[3].value == "{}") {
+    if (tokens.length == 4 && tokens[0].value == "fn" && tokens[1].type == LowPreprocessedTokenType.identifier && tokens[2].value == "()" && tokens[3].value == "{}") {
       final name = tokens[1].value;
 
-      final argtokens =
-          preprocessor.splitBySeperators(tokens[2].subtokens, [',']);
+      final argtokens = preprocessor.splitBySeperators(tokens[2].subtokens, [',']);
       final argnames = <String>[];
       final argtypes = <LowAST?>[];
 
@@ -297,10 +233,7 @@ class LowParser {
         i++;
         if (argtoken.isEmpty) {
           if (argtokens.length == 1) break;
-          throw LowParsingFailure(
-              "Parameter #$i is an empty segment (unparsable)",
-              tokens[2].position,
-              lines);
+          throw LowParsingFailure("Parameter #$i is an empty segment (unparsable)", tokens[2].position, lines);
         }
         if (argtoken.length > 1) {
           if (argtoken[1].value != ":") {
@@ -318,8 +251,7 @@ class LowParser {
             );
           }
 
-          argtypes
-              .add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
+          argtypes.add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
         } else {
           argtypes.add(null);
         }
@@ -329,19 +261,13 @@ class LowParser {
 
       final body = parseLine([tokens[3]], lines, LowParserMode.topLevel);
 
-      return LowDefineFunction(
-          name, false, body, argnames, argtypes, null, tokens.first.position);
+      return LowDefineFunction(name, false, body, argnames, argtypes, null, tokens.first.position);
     }
 
-    if (tokens.length == 4 &&
-        tokens[0].value == "static" &&
-        tokens[1].type == LowPreprocessedTokenType.identifier &&
-        tokens[2].value == "()" &&
-        tokens[3].value == "{}") {
+    if (tokens.length == 4 && tokens[0].value == "static" && tokens[1].type == LowPreprocessedTokenType.identifier && tokens[2].value == "()" && tokens[3].value == "{}") {
       final name = tokens[1].value;
 
-      final argtokens =
-          preprocessor.splitBySeperators(tokens[2].subtokens, [',']);
+      final argtokens = preprocessor.splitBySeperators(tokens[2].subtokens, [',']);
       final argnames = <String>[];
       final argtypes = <LowAST?>[];
 
@@ -350,10 +276,7 @@ class LowParser {
         i++;
         if (argtoken.isEmpty) {
           if (argtokens.length == 1) break;
-          throw LowParsingFailure(
-              "Parameter #$i is an empty segment (unparsable)",
-              tokens[2].position,
-              lines);
+          throw LowParsingFailure("Parameter #$i is an empty segment (unparsable)", tokens[2].position, lines);
         }
         if (argtoken.length > 1) {
           if (argtoken[1].value != ":") {
@@ -371,8 +294,7 @@ class LowParser {
             );
           }
 
-          argtypes
-              .add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
+          argtypes.add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
         } else {
           argtypes.add(null);
         }
@@ -382,24 +304,17 @@ class LowParser {
 
       final body = parseLine([tokens[3]], lines, LowParserMode.topLevel);
 
-      return LowDefineFunction(
-          name, true, body, argnames, argtypes, null, tokens.first.position);
+      return LowDefineFunction(name, true, body, argnames, argtypes, null, tokens.first.position);
     }
 
-    if (tokens.length > 4 &&
-        tokens[0].value == "fn" &&
-        tokens[1].type == LowPreprocessedTokenType.identifier &&
-        tokens[2].value == "()" &&
-        tokens[3].value == ":" &&
-        tokens.last.value == "{}") {
+    if (tokens.length > 4 && tokens[0].value == "fn" && tokens[1].type == LowPreprocessedTokenType.identifier && tokens[2].value == "()" && tokens[3].value == ":" && tokens.last.value == "{}") {
       if (tokens.length == 5) {
         throw LowParsingFailure("Expected a type", tokens.last.position, lines);
       }
 
       final name = tokens[1].value;
 
-      final argtokens =
-          preprocessor.splitBySeperators(tokens[2].subtokens, [',']);
+      final argtokens = preprocessor.splitBySeperators(tokens[2].subtokens, [',']);
       final argnames = <String>[];
       final argtypes = <LowAST?>[];
 
@@ -408,27 +323,17 @@ class LowParser {
         i++;
         if (argtoken.isEmpty) {
           if (argtokens.length == 1) break;
-          throw LowParsingFailure(
-              "Parameter #$i is an empty segment (unparsable)",
-              tokens[2].position,
-              lines);
+          throw LowParsingFailure("Parameter #$i is an empty segment (unparsable)", tokens[2].position, lines);
         }
         if (argtoken.length > 1) {
           if (argtoken[1].value != ":") {
-            throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+            throw LowParsingFailure("Please separate argument name and argument type by a :", argtoken[1].position, lines);
           }
           if (argtoken.length == 2) {
-            throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+            throw LowParsingFailure("Please separate argument name and argument type by a :", argtoken[1].position, lines);
           }
 
-          argtypes
-              .add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
+          argtypes.add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
         } else {
           argtypes.add(null);
         }
@@ -438,27 +343,19 @@ class LowParser {
 
       final body = parseLine([tokens.last], lines, LowParserMode.topLevel);
 
-      final returnType = parseLine(
-          tokens.sublist(4, tokens.length - 1), lines, LowParserMode.data);
+      final returnType = parseLine(tokens.sublist(4, tokens.length - 1), lines, LowParserMode.data);
 
-      return LowDefineFunction(name, false, body, argnames, argtypes,
-          returnType, tokens.first.position);
+      return LowDefineFunction(name, false, body, argnames, argtypes, returnType, tokens.first.position);
     }
 
-    if (tokens.length > 4 &&
-        tokens[0].value == "static" &&
-        tokens[1].type == LowPreprocessedTokenType.identifier &&
-        tokens[2].value == "()" &&
-        tokens[3].value == ":" &&
-        tokens.last.value == "{}") {
+    if (tokens.length > 4 && tokens[0].value == "static" && tokens[1].type == LowPreprocessedTokenType.identifier && tokens[2].value == "()" && tokens[3].value == ":" && tokens.last.value == "{}") {
       if (tokens.length == 5) {
         throw LowParsingFailure("Expected a type", tokens.last.position, lines);
       }
 
       final name = tokens[1].value;
 
-      final argtokens =
-          preprocessor.splitBySeperators(tokens[2].subtokens, [',']);
+      final argtokens = preprocessor.splitBySeperators(tokens[2].subtokens, [',']);
       final argnames = <String>[];
       final argtypes = <LowAST?>[];
 
@@ -467,27 +364,17 @@ class LowParser {
         i++;
         if (argtoken.isEmpty) {
           if (argtokens.length == 1) break;
-          throw LowParsingFailure(
-              "Parameter #$i is an empty segment (unparsable)",
-              tokens[2].position,
-              lines);
+          throw LowParsingFailure("Parameter #$i is an empty segment (unparsable)", tokens[2].position, lines);
         }
         if (argtoken.length > 1) {
           if (argtoken[1].value != ":") {
-            throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+            throw LowParsingFailure("Please separate argument name and argument type by a :", argtoken[1].position, lines);
           }
           if (argtoken.length == 2) {
-            throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+            throw LowParsingFailure("Please separate argument name and argument type by a :", argtoken[1].position, lines);
           }
 
-          argtypes
-              .add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
+          argtypes.add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
         } else {
           argtypes.add(null);
         }
@@ -497,19 +384,13 @@ class LowParser {
 
       final body = parseLine([tokens.last], lines, LowParserMode.topLevel);
 
-      final returnType = parseLine(
-          tokens.sublist(4, tokens.length - 1), lines, LowParserMode.data);
+      final returnType = parseLine(tokens.sublist(4, tokens.length - 1), lines, LowParserMode.data);
 
-      return LowDefineFunction(name, true, body, argnames, argtypes, returnType,
-          tokens.first.position);
+      return LowDefineFunction(name, true, body, argnames, argtypes, returnType, tokens.first.position);
     }
 
-    if (tokens.length == 3 &&
-        tokens[0].value == "fn" &&
-        tokens[1].value == "()" &&
-        tokens[2].value == "{}") {
-      final argtokens =
-          preprocessor.splitBySeperators(tokens[1].subtokens, [',']);
+    if (tokens.length == 3 && tokens[0].value == "fn" && tokens[1].value == "()" && tokens[2].value == "{}") {
+      final argtokens = preprocessor.splitBySeperators(tokens[1].subtokens, [',']);
       final argnames = <String>[];
       final argtypes = <LowAST?>[];
 
@@ -518,27 +399,17 @@ class LowParser {
         i++;
         if (argtoken.isEmpty) {
           if (argtokens.length == 1) break;
-          throw LowParsingFailure(
-              "Parameter #$i is an empty segment (unparsable)",
-              tokens[2].position,
-              lines);
+          throw LowParsingFailure("Parameter #$i is an empty segment (unparsable)", tokens[2].position, lines);
         }
         if (argtoken.length > 1) {
           if (argtoken[1].value != ":") {
-            throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+            throw LowParsingFailure("Please separate argument name and argument type by a :", argtoken[1].position, lines);
           }
           if (argtoken.length == 2) {
-            throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+            throw LowParsingFailure("Please separate argument name and argument type by a :", argtoken[1].position, lines);
           }
 
-          argtypes
-              .add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
+          argtypes.add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
         } else {
           argtypes.add(null);
         }
@@ -548,21 +419,15 @@ class LowParser {
 
       final body = parseLine([tokens[2]], lines, LowParserMode.topLevel);
 
-      return LowLambdaFunction(
-          body, argnames, argtypes, null, tokens.first.position);
+      return LowLambdaFunction(body, argnames, argtypes, null, tokens.first.position);
     }
 
-    if (tokens.length > 3 &&
-        tokens[0].value == "fn" &&
-        tokens[1].value == "()" &&
-        tokens[2].value == ":" &&
-        tokens.last.value == "{}") {
+    if (tokens.length > 3 && tokens[0].value == "fn" && tokens[1].value == "()" && tokens[2].value == ":" && tokens.last.value == "{}") {
       if (tokens.length == 4) {
         throw LowParsingFailure("Expected a type", tokens.last.position, lines);
       }
 
-      final argtokens =
-          preprocessor.splitBySeperators(tokens[1].subtokens, [',']);
+      final argtokens = preprocessor.splitBySeperators(tokens[1].subtokens, [',']);
       final argnames = <String>[];
       final argtypes = <LowAST?>[];
 
@@ -571,27 +436,17 @@ class LowParser {
         i++;
         if (argtoken.isEmpty) {
           if (argtokens.length == 1) break;
-          throw LowParsingFailure(
-              "Parameter #$i is an empty segment (unparsable)",
-              tokens[2].position,
-              lines);
+          throw LowParsingFailure("Parameter #$i is an empty segment (unparsable)", tokens[2].position, lines);
         }
         if (argtoken.length > 1) {
           if (argtoken[1].value != ":") {
-            throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+            throw LowParsingFailure("Please separate argument name and argument type by a :", argtoken[1].position, lines);
           }
           if (argtoken.length == 2) {
-            throw LowParsingFailure(
-                "Please separate argument name and argument type by a :",
-                argtoken[1].position,
-                lines);
+            throw LowParsingFailure("Please separate argument name and argument type by a :", argtoken[1].position, lines);
           }
 
-          argtypes
-              .add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
+          argtypes.add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
         } else {
           argtypes.add(null);
         }
@@ -600,11 +455,9 @@ class LowParser {
       }
 
       final body = parseLine([tokens.last], lines, LowParserMode.topLevel);
-      final returnType = parseLine(
-          tokens.sublist(3, tokens.length - 1), lines, LowParserMode.data);
+      final returnType = parseLine(tokens.sublist(3, tokens.length - 1), lines, LowParserMode.data);
 
-      return LowLambdaFunction(
-          body, argnames, argtypes, returnType, tokens.first.position);
+      return LowLambdaFunction(body, argnames, argtypes, returnType, tokens.first.position);
     }
 
     if (tokens.length >= 2 && tokens[0].value == "return") {
@@ -618,11 +471,8 @@ class LowParser {
     }
 
     if (tokens.length == 3) {
-      if (tokens[0].value == "if" &&
-          tokens[1].value == "()" &&
-          tokens[2].value == "{}") {
-        final condition =
-            parseLine(tokens[1].subtokens, lines, LowParserMode.data);
+      if (tokens[0].value == "if" && tokens[1].value == "()" && tokens[2].value == "{}") {
+        final condition = parseLine(tokens[1].subtokens, lines, LowParserMode.data);
         final body = parseLine([tokens[2]], lines, LowParserMode.topLevel);
 
         return LowIfNode(condition, body, null, tokens[0].position);
@@ -658,45 +508,30 @@ class LowParser {
         }
       }
 
-      return LowIncludeNode(parseLine(pathTokens, lines, LowParserMode.data),
-          mode, identifier, tokens.first.position);
+      return LowIncludeNode(parseLine(pathTokens, lines, LowParserMode.data), mode, identifier, tokens.first.position);
     }
 
-    if (tokens.length == 3 &&
-        tokens[0].value == "for" &&
-        tokens[1].value == "()" &&
-        tokens[2].value == "{}") {
+    if (tokens.length == 3 && tokens[0].value == "for" && tokens[1].value == "()" && tokens[2].value == "{}") {
       final parts = splitByLines(tokens[1].subtokens);
       if (parts.length != 3) {
-        throw LowParsingFailure(
-            "For loops need 3 lines in their first parenthesis: A startup line, a condition, and an afterwards",
-            tokens[1].position,
-            lines);
+        throw LowParsingFailure("For loops need 3 lines in their first parenthesis: A startup line, a condition, and an afterwards", tokens[1].position, lines);
       }
       final startup = parseLine(parts[0], lines, LowParserMode.topLevel);
       final condition = parseLine(parts[1], lines, LowParserMode.data);
       final afterwards = parseLine(parts[2], lines, LowParserMode.topLevel);
       final body = parseLine([tokens[2]], lines, LowParserMode.topLevel);
 
-      return LowForNode(
-          startup, condition, body, afterwards, tokens.first.position);
+      return LowForNode(startup, condition, body, afterwards, tokens.first.position);
     }
 
-    if (tokens.length == 3 &&
-        tokens[0].value == "while" &&
-        tokens[1].value == "()" &&
-        tokens[2].value == "{}") {
-      final condition =
-          parseLine(tokens[1].subtokens, lines, LowParserMode.data);
+    if (tokens.length == 3 && tokens[0].value == "while" && tokens[1].value == "()" && tokens[2].value == "{}") {
+      final condition = parseLine(tokens[1].subtokens, lines, LowParserMode.data);
       final body = parseLine([tokens[2]], lines, LowParserMode.topLevel);
 
       return LowWhileNode(condition, body, tokens.first.position);
     }
 
-    if (tokens.length == 3 &&
-        tokens[0].value == "foreach" &&
-        tokens[1].value == "()" &&
-        tokens[2].value == "{}") {
+    if (tokens.length == 3 && tokens[0].value == "foreach" && tokens[1].value == "()" && tokens[2].value == "{}") {
       final vars = <String>[];
       final data = <LowPreprocessedToken>[];
 
@@ -706,8 +541,7 @@ class LowParser {
       while (true) {
         if (i >= definition.length) {
           if (!finishedVars) {
-            throw LowParsingFailure(
-                "Expected to reach in", tokens[1].position, lines);
+            throw LowParsingFailure("Expected to reach in", tokens[1].position, lines);
           }
           break;
         }
@@ -735,28 +569,21 @@ class LowParser {
       }
       final body = parseLine([tokens[2]], lines, LowParserMode.topLevel);
 
-      return LowForeachNode(vars, parseLine(data, lines, LowParserMode.data),
-          body, tokens.first.position);
+      return LowForeachNode(vars, parseLine(data, lines, LowParserMode.data), body, tokens.first.position);
     }
 
     if (tokens.length >= 5) {
-      if (tokens[0].value == "if" &&
-          tokens[1].value == "()" &&
-          tokens[2].value == "{}" &&
-          tokens[3].value == "else") {
-        final condition =
-            parseLine(tokens[1].subtokens, lines, LowParserMode.data);
+      if (tokens[0].value == "if" && tokens[1].value == "()" && tokens[2].value == "{}" && tokens[3].value == "else") {
+        final condition = parseLine(tokens[1].subtokens, lines, LowParserMode.data);
         final body = parseLine([tokens[2]], lines, LowParserMode.topLevel);
-        final fallback =
-            parseLine(tokens.sublist(4), lines, LowParserMode.topLevel);
+        final fallback = parseLine(tokens.sublist(4), lines, LowParserMode.topLevel);
 
         return LowIfNode(condition, body, fallback, tokens[0].position);
       }
     }
 
     if (tokens.last.value == "[]") {
-      final owner = parseLine(
-          tokens.sublist(0, tokens.length - 1), lines, LowParserMode.data);
+      final owner = parseLine(tokens.sublist(0, tokens.length - 1), lines, LowParserMode.data);
       final args = parseLine(tokens.last.subtokens, lines, LowParserMode.data);
 
       return LowHandleOp("[]", owner, [args], tokens.last.position);
@@ -774,31 +601,21 @@ class LowParser {
       return piped;
     }
 
-    if (tokens.length >= 2 &&
-        tokens.last.value == "()" &&
-        tokens[tokens.length - 2].type != LowPreprocessedTokenType.operator) {
+    if (tokens.length >= 2 && tokens.last.value == "()" && tokens[tokens.length - 2].type != LowPreprocessedTokenType.operator) {
       final toCall = tokens.sublist(0, tokens.length - 1);
       if (!containsOperators(toCall, except: ['.'])) {
-        final params =
-            preprocessor.splitBySeperators(tokens.last.subtokens, [',']);
+        final params = preprocessor.splitBySeperators(tokens.last.subtokens, [',']);
 
         var i = 0;
         for (var param in params) {
           i++;
           if (param.isEmpty) {
             if (params.length == 1) break;
-            throw LowParsingFailure(
-                "Parameter #$i is an empty segment (unparsable)",
-                tokens.last.position,
-                lines);
+            throw LowParsingFailure("Parameter #$i is an empty segment (unparsable)", tokens.last.position, lines);
           }
         }
 
-        final paramsAST = (params.length == 1 && params.first.isEmpty)
-            ? <LowAST>[]
-            : params
-                .map((line) => parseLine(line, lines, LowParserMode.data))
-                .toList();
+        final paramsAST = (params.length == 1 && params.first.isEmpty) ? <LowAST>[] : params.map((line) => parseLine(line, lines, LowParserMode.data)).toList();
 
         final call = parseLine(toCall, lines, LowParserMode.data);
 
@@ -812,12 +629,11 @@ class LowParser {
       return indexing;
     }
 
-    throw LowParsingFailure(
-        "Unable to parse line / instruction.", tokens.first.position, lines);
+    throw LowParsingFailure("Unable to parse line / instruction.", tokens.first.position, lines);
   }
 
   String parseStringLiteral(LowPreprocessedToken token, List<String> lines) {
-    final chars = token.value.substring(1, token.value.length - 1);
+    final chars = token.value.substring(1, token.value.length - 1).replaceAll('\r', '');
     var escaping = false;
     var str = "";
     for (var i = 0; i < chars.length; i++) {
@@ -840,18 +656,12 @@ class LowParser {
         str += "\t";
       } else if (char == "x" && escaping) {
         if (left < 2) {
-          throw LowParsingFailure(
-              "Escape sequence \\x must be followed by 2 other hex digits",
-              token.position,
-              lines);
+          throw LowParsingFailure("Escape sequence \\x must be followed by 2 other hex digits", token.position, lines);
         }
         final digits = '${chars[i + 1]}${chars[i + 2]}';
         final codeunit = int.tryParse(digits, radix: 16);
         if (codeunit == null) {
-          throw LowParsingFailure(
-              "Escape sequence \\x must be followed by 2 other hex digits",
-              token.position,
-              lines);
+          throw LowParsingFailure("Escape sequence \\x must be followed by 2 other hex digits", token.position, lines);
         }
         str += String.fromCharCode(codeunit);
       } else {
@@ -871,13 +681,11 @@ class LowParser {
     ["&&", "||"],
     ["="],
   ];
-  late List<String> allOps =
-      opOrder.fold<List<String>>([], (a, b) => [...a, ...b]);
+  late List<String> allOps = opOrder.fold<List<String>>([], (a, b) => [...a, ...b]);
 
   late List<String> indexes = ["."];
 
-  bool containsOperators(List<LowPreprocessedToken> tokens,
-      {List<String> except = const []}) {
+  bool containsOperators(List<LowPreprocessedToken> tokens, {List<String> except = const []}) {
     for (var token in tokens) {
       if (allOps.contains(token.value) && !except.contains(token.value)) {
         return true;
@@ -887,8 +695,7 @@ class LowParser {
     return false;
   }
 
-  LowAST? handleIndexing(
-      List<LowPreprocessedToken> tokens, List<String> lines) {
+  LowAST? handleIndexing(List<LowPreprocessedToken> tokens, List<String> lines) {
     // List of either indexing or LowASTs
     var l = [];
     {
@@ -921,8 +728,7 @@ class LowParser {
         final LowAST last = nl.removeLast();
         final LowAST next = l[i + 1];
         if (next is! LowVariableNode) {
-          throw LowParsingFailure(
-              "Field name should be identifier", next.position, lines);
+          throw LowParsingFailure("Field name should be identifier", next.position, lines);
         }
         i++; // Skip next
         nl.add(LowHandleOp(op, last, [next], last.position));
@@ -980,8 +786,7 @@ class LowParser {
     return null;
   }
 
-  LowAST? handleOperators(
-      List<LowPreprocessedToken> tokens, List<String> lines) {
+  LowAST? handleOperators(List<LowPreprocessedToken> tokens, List<String> lines) {
     // List of either operators or LowASTs
     var l = [];
     {

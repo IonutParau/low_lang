@@ -1,0 +1,24 @@
+write("Operation: ")
+var op = read()
+
+write("A: ")
+var a = toDouble(read())
+
+write("B: ")
+var b = toDouble(read())
+
+if(op == "+") {
+    print(a + b)
+}
+if(op == "-") {
+    print(a - b)
+}
+if(op == "*") {
+    print(a * b)
+}
+if(op == "/") {
+    print(a / b)
+}
+if(op == "%") {
+    print(a % b)
+}

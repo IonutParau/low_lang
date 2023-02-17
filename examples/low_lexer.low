@@ -1,0 +1,261 @@
+static LowTokenPosition = {
+  file: string,
+  line: int,
+  char: int,
+}
+
+static newLowTokenPosition(file: string, line: int, char: int): LowTokenPosition {
+  return {
+    file: file,
+    line: line,
+    char: char,
+  }
+}
+
+static copyLowTokenPosition(position: LowTokenPosition): LowTokenPosition {
+  return {
+    file: position.file,
+    line: position.line,
+    char: position.char,
+  }
+}
+
+static LowTokenType = enum(["identifier", "keyword", "seperator", "operator", "literal"])
+
+static LowToken = {
+  value: string,
+  type: LowTokenType,
+  position: LowTokenPosition
+}
+
+static newLowToken(value: string, type: LowTokenType, position: LowTokenPosition): LowToken {
+  return {
+    value: value,
+    type: type,
+    position: position,
+  }
+}
+
+static LowLexer = {}
+
+LowLexer.lex = fn(str: string, fileName: string): listOf(LowToken) {
+  var chars = str.split("")
+  var inString = false
+  var escaping = false
+  var currPos = newLowTokenPosition(fileName, 1, 0)
+  var l = [newLowToken("", "identifier", newLowTokenPosition(fileName, 1, 1))]
+
+  for(var i = 0; i < chars.length; i = i + 1) {
+    var char = chars[i]
+
+    if(char == "\n") {
+      currPos.line = currPos.line + 1
+      currPos.char = 0
+    } else {
+      currPos.char = currPos.char + 1
+    }
+
+    if(char == " " && not(inString)) {
+      l.add(newLowToken("", "seperator", copyLowTokenPosition(currPos)))
+      continue
+    } else if(char == "\t" && not(inString)) {
+      l.add(newLowToken("", "seperator", copyLowTokenPosition(currPos)))
+      continue
+    } else if(char == "\r") {
+      continue
+    } else if(char == "\"" && not(escaping)) {
+      inString = not(inString)
+    } else if(char == "\\" && not(escaping)) {
+      escaping = true
+      if(inString) {
+        l.last.value = l.last.value + char
+      }
+      continue
+    }
+
+    if(LowLexer.isSeperator(char) && not(inString)) {
+      l.add(newLowToken(char, "seperator", copyLowTokenPosition(currPos)))
+    } else if(LowLexer.isOperator(char) && not(inString)) {
+      if(LowLexer.isOperator(l.last.value)) {
+        l.last.value = l.last.value + char
+      } else {
+        l.add(newLowToken(char, "operator", copyLowTokenPosition(currPos)))
+      }
+    } else if(LowLexer.isText(char) || inString) {
+      if(LowLexer.isText(l.last.value)) {
+        l.last.value = l.last.value + char
+      } else {
+        l.add(newLowToken(char, "identifier", copyLowTokenPosition(currPos)))
+      }
+    }
+    escaping = false
+  }
+
+  if(escaping) {
+    error("Lexer: Unable to escape End of File")
+  }
+
+  if(inString) {
+    error("Lexer: Missing end of string")
+  }
+
+  var nl = []
+
+  foreach(token in l) {
+    if(token.value.length > 0) {
+      nl.add(token)
+    }
+  }
+
+  return nl -> LowLexer.handleEdgeCases -> LowLexer.handleTypes
+}
+
+LowLexer.handleEdgeCases = fn(faulty: listOf(LowToken)): listOf(LowToken) {
+  var fixed = []
+
+  for(var i = 0; i < faulty.length; i = i + 1) {
+    var token = faulty[i]
+
+    fn last(n: int): LowToken {
+      var idx = i - n;
+
+      if(idx < 0) {
+        return newLowToken("", "identifier", newLowTokenPosition("out-of-bounds", 0, 0))
+      } else {
+        return faulty[idx]
+      }
+    }
+
+    fn next(n: int): LowToken {
+      var idx = i + n
+
+      if(idx >= faulty.length) {
+        return newLowToken("", "identifier", newLowTokenPosition("out-of-bounds", 0, 0))
+      } else {
+        return faulty[idx]
+      }
+    }
+
+    if((LowLexer.isSeperator(last(1).value) && last(1).value != "]") || LowLexer.isOperator(last(1).value)) {
+      if(token.value == "-" && toInt(next(1).value) != null && next(2).value == "." && toInt(next(3).value) != null) {
+        fixed.add(newLowToken("-" + next(1).value + "." + next(3).value), "literal", token.position)
+        i = i + 3
+        continue
+      }
+
+      if(token.value == "-" && toInt(next(1).value) != null) {
+        fixed.add(newLowToken("-" + next(1).value, "literal", token.position))
+        i = i + 1
+        continue
+      }
+    }
+
+    if(toInt(token.value) != null && next(1).value == "." && toInt(next(2).value) != null) {
+      fixed.add(newLowToken(token.value + "." + next(2).value, "literal", token.position))
+      i = i + 2
+      continue
+    }
+
+    fixed.add(token)
+  }
+
+  return fixed
+}
+
+LowLexer.handleTypes = fn(untyped: listOf(LowToken)) {
+  foreach(token in untyped) {
+    if(LowLexer.isLiteral(token.value)) {
+      token.type = "literal"
+    } else if(LowLexer.isIdentifier(token.value)) {
+      token.type = "identifier"
+    } else if(LowLexer.isOperator(token.value)) {
+      token.type = "operator"
+    } else if(LowLexer.isSeperator(token.value)) {
+      token.type = "seperator"
+    } else if(LowLexer.isKeyword(token.value)) {
+      token.type = "keyword"
+    } else {
+      error("Lexer can't figure out the type of " + token.value)
+    }
+  }
+
+  return untyped
+}
+
+LowLexer.isOperator = fn(str: string): bool {
+  if(str.length == 0) {return false}
+
+  var ops = "./=-*%!+^:&|<>"
+
+  var chars = str.split("")
+
+  foreach(char in chars) {
+    if(not(ops.contains(char))) {
+      return false
+    }
+  }
+
+  return true
+}
+
+LowLexer.isText = fn(str: string): bool {
+  if(str.length == 0) {return false}
+
+  return not(LowLexer.isOperator(str)) && not(LowLexer.isSeperator(str))
+}
+
+LowLexer.isSeperator = fn(char: string): bool {
+  if(char.length == 0) {return false}
+  return ",()[]{}@;\n".contains(char)
+}
+
+LowLexer.isKeyword = fn(str: string): bool {
+  var keywords = [
+    "var",
+    "fn",
+    "if",
+    "else",
+    "include",
+    "return",
+    "continue",
+    "break",
+    "for",
+    "while",
+    "foreach",
+    "as",
+    "globally",
+    "is",
+    "isnt",
+    "static",
+  ]
+
+  return keywords.contains(str)
+}
+
+LowLexer.isLiteral = fn(str: string): bool {
+  if(str.startsWith("\"")) {return true}
+  if(toDouble(str) != null) {return true}
+  if(str == "true" || str == "false") {return true}
+  if(str == "@[]") {return true}
+  if(str == "@{}") {return true}
+  if(str == "null") {return true}
+  return false
+}
+
+LowLexer.isIdentifier = fn(str: string): bool {
+  if(LowLexer.isLiteral(str)) {return false}
+  if(LowLexer.isKeyword(str)) {return false}
+
+  var allowed = "abcdefghijklmnopqrstuvwxyz1234567890_"
+  var chars = str.split("")
+
+  foreach(char in chars) {
+    if(not(allowed.contains(char.lower))) {return false}
+  }
+
+  return true
+}
+
+var file = prompt("File: ")
+
+print(LowLexer.lex(fs.read(file), file))

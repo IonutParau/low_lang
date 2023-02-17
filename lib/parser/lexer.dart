@@ -178,6 +178,7 @@ class LowLexer {
       "globally",
       "is",
       "isnt",
+      "static",
     ];
 
     return keywords.contains(str);

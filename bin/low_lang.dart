@@ -13,12 +13,16 @@ void main(List<String> arguments) {
     vm.defineGlobal("ARGS", []);
 
     while (true) {
-      stdout.write("Low REPL > ");
-      final line = stdin.readLineSync();
+      try {
+        stdout.write("Low REPL > ");
+        final line = stdin.readLineSync();
 
-      if (line == null) return;
+        if (line == null) return;
 
-      vm.runCode(line, "repl");
+        vm.runCode(line, "repl");
+      } catch (e) {
+        print(e);
+      }
     }
   }
 

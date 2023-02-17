@@ -1287,6 +1287,11 @@ class LowInteropHandler {
 
     if (type is LowObject) {
       if (value is! LowObject) return false;
+
+      if (type["__type"] != null) {
+        return matchesType(context, position, value, type["__type"]);
+      }
+
       var incorrectField = false;
 
       for (var pair in type.entries) {

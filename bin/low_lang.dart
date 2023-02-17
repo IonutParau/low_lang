@@ -5,19 +5,12 @@ import 'package:low_lang/vm/errors.dart';
 
 void main(List<String> arguments) {
   if (arguments.isEmpty) {
-    print("Usage: ${Platform.executable} (path) <args>");
-    return;
-  }
-
-  final f = File(arguments.first);
-
-  if (f.path == "__repl__") {
     final vm = LowVM();
 
     vm.loadLibraries();
 
     vm.defineGlobal("EXEC", Platform.executable);
-    vm.defineGlobal("ARGS", arguments.sublist(1));
+    vm.defineGlobal("ARGS", []);
 
     while (true) {
       stdout.write("Low REPL > ");
@@ -28,6 +21,8 @@ void main(List<String> arguments) {
       vm.runCode(line, "repl");
     }
   }
+
+  final f = File(arguments.first);
 
   if (!f.existsSync()) {
     print("File ${f.path} does not exist.");

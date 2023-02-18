@@ -1,4 +1,5 @@
 import 'package:low_lang/ast/ast.dart';
+import 'package:low_lang/ast/control_flow.dart';
 import 'package:low_lang/vm/context.dart';
 
 class LowCodeBody extends LowAST {
@@ -30,7 +31,18 @@ class LowCodeBody extends LowAST {
   @override
   Set<String> dependencies(Set<String> toIgnore) {
     final scoped = {...toIgnore};
-    return body.fold({}, (current, node) => current..addAll(node.handleDependencies(scoped)));
+    final d = <String>{};
+
+    for (final node in body) {
+      d.addAll(node.handleDependencies(scoped));
+
+      // In all of these, the block would always end there, thus anything after that is not a dependency.
+      if (node is LowContinueNode || node is LowBreakNode || node is LowReturnNode) {
+        break;
+      }
+    }
+
+    return d;
   }
 
   @override

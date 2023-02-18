@@ -40,9 +40,25 @@ class LowCodeBody extends LowAST {
       if (node is LowContinueNode || node is LowBreakNode || node is LowReturnNode) {
         break;
       }
+
+      // Bodies might also house these, so we need to check for that
+      if (node is LowCodeBody && node.alwaysEnd()) {
+        break;
+      }
     }
 
     return d;
+  }
+
+  bool alwaysEnd() {
+    for (final node in body) {
+      // In all of these, the block would always end there, thus anything after that is not a dependency.
+      if (node is LowContinueNode || node is LowBreakNode || node is LowReturnNode) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @override

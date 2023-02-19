@@ -12,6 +12,7 @@ import 'package:low_lang/parser/lexer.dart';
 import 'package:low_lang/parser/preprocessor.dart';
 import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/vm/errors.dart';
+import 'package:low_lang/vm/vm.dart';
 
 class LowParser {
   final lexer = LowLexer();
@@ -570,6 +571,79 @@ class LowParser {
       final body = parseLine([tokens[2]], lines, LowParserMode.topLevel);
 
       return LowForeachNode(vars, parseLine(data, lines, LowParserMode.data), body, tokens.first.position);
+    }
+
+    if (tokens.length == 3 && tokens[0].value == "struct" && tokens[1].type == LowPreprocessedTokenType.identifier && tokens[2].value == "()") {
+      final name = tokens[1].value;
+
+      final argtokens = preprocessor.splitBySeperators(tokens[2].subtokens, [',']);
+      final argnames = <String>[];
+      final argtypes = <LowAST?>[];
+
+      var i = 0;
+      for (var argtoken in argtokens) {
+        i++;
+        if (argtoken.isEmpty) {
+          if (argtokens.length == 1) break;
+          throw LowParsingFailure("Struct Field #$i is an empty segment (unparsable)", tokens[2].position, lines);
+        }
+        if (argtoken.length > 1) {
+          if (argtoken[1].value != ":") {
+            throw LowParsingFailure("Please separate struct field and type by a :", argtoken[1].position, lines);
+          }
+          if (argtoken.length == 2) {
+            throw LowParsingFailure("Please separate struct field and type by a :", argtoken[1].position, lines);
+          }
+
+          argtypes.add(parseLine(argtoken.sublist(2), lines, LowParserMode.data));
+        } else {
+          argtypes.add(null);
+        }
+
+        argnames.add(argtoken.first.value);
+      }
+
+      final objPos = tokens[2].position;
+
+      final typeMap = <String, LowAST>{};
+
+      for (var i = 0; i < argnames.length; i++) {
+        if (argtypes[i] != null) {
+          typeMap[argnames[i]] = argtypes[i]!;
+        }
+      }
+
+      return LowDefineVariable(
+        name,
+        LowObjectNode(
+          {
+            "__call": LowLambdaFunction(
+              LowCodeBody([
+                LowReturnNode(
+                    LowObjectNode(
+                        Map.fromEntries(
+                          argnames.map(
+                            (n) => MapEntry(
+                              n,
+                              LowVariableNode(n, objPos),
+                            ),
+                          ),
+                        ),
+                        objPos),
+                    objPos)
+              ], objPos),
+              argnames,
+              argtypes,
+              null,
+              objPos,
+            ),
+            "__type": LowObjectNode(typeMap, objPos),
+          },
+          objPos,
+        ),
+        true,
+        tokens.first.position,
+      );
     }
 
     if (tokens.length >= 5) {

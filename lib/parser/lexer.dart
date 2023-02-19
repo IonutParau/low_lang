@@ -179,6 +179,7 @@ class LowLexer {
       "is",
       "isnt",
       "static",
+      "struct",
     ];
 
     return keywords.contains(str);

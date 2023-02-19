@@ -72,7 +72,7 @@ class LowDefineFunction extends LowAST {
   Set<String> dependencies(Set<String> toIgnore) {
     return {
       ...body.dependencies({...toIgnore, ...params}),
-      ...types.fold<Set<String>>({}, (current, type) => current..addAll(type?.dependencies(toIgnore) ?? {})),
+      ...types.fold<Set<String>>({}, (current, type) => current..addAll(type?.dependencies({...toIgnore, ...params}) ?? {})),
       ...(returnType?.dependencies(toIgnore) ?? {}),
     };
   }
@@ -89,6 +89,11 @@ LowFunction createLowFunction(LowContext oldCtx, LowTokenPosition position, List
 
     for (var i = 0; i < params.length; i++) {
       final param = params[i];
+      final val = i < args.length ? args[i] : null;
+      context.defineLocal(param, val);
+    }
+
+    for (var i = 0; i < params.length; i++) {
       final typeAST = types[i];
       final val = i < args.length ? args[i] : null;
 
@@ -99,8 +104,6 @@ LowFunction createLowFunction(LowContext oldCtx, LowTokenPosition position, List
           context.stackTrace,
         );
       }
-
-      context.defineLocal(param, val);
     }
 
     body.run(context);

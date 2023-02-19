@@ -121,7 +121,11 @@ class LowLambdaFunction extends LowAST {
   }
 
   @override
-  Set<String> dependencies(Set<String> toIgnore) => body.dependencies({...toIgnore, ...params});
+  Set<String> dependencies(Set<String> toIgnore) => {
+        ...body.dependencies({...toIgnore, ...params}),
+        ...types.fold<Set<String>>({}, (current, type) => current..addAll(type?.dependencies({...toIgnore, ...params}) ?? {})),
+        ...(returnType?.dependencies(toIgnore) ?? {}),
+      };
   @override
   String? markForIgnorance() => null;
 }

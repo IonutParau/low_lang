@@ -17,6 +17,7 @@ enum LowInstructionType {
   getGlobal,
   setGlobal,
   ifCheck,
+  whileLoop,
 }
 
 class LowInstruction {
@@ -130,6 +131,25 @@ class LowInstruction {
           } else if (fallback != null) {
             final old = context.size;
             LowInstruction.runBlock(fallback, instruction.position, context);
+            while (old > context.size) {
+              context.pop();
+            }
+          }
+          break;
+        case LowInstructionType.whileLoop:
+          final List<LowInstruction> check = instruction.data[0];
+          final List<LowInstruction> body = instruction.data[1];
+
+          while (true) {
+            LowInstruction.runBlock(check, instruction.position, context);
+            if (!LowInteropHandler.truthful(
+              context,
+              instruction.position,
+              context.pop(),
+            )) break;
+
+            final old = context.size;
+            LowInstruction.runBlock(body, instruction.position, context);
             while (old > context.size) {
               context.pop();
             }

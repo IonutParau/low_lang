@@ -13,9 +13,23 @@ void main() {
 
   LowInstruction.runBlock(
     [
-      LowInstruction(LowInstructionType.getGlobal, "print", pos),
-      LowInstruction(LowInstructionType.addString, "Hello, world!", pos),
-      LowInstruction(LowInstructionType.call, [1, false], pos),
+      LowInstruction(LowInstructionType.addBool, true, pos),
+      LowInstruction(
+        LowInstructionType.ifCheck,
+        [
+          [
+            LowInstruction(LowInstructionType.getGlobal, "print", pos),
+            LowInstruction(LowInstructionType.addString, "Truthful", pos),
+            LowInstruction(LowInstructionType.call, [1, false], pos),
+          ],
+          [
+            LowInstruction(LowInstructionType.getGlobal, "print", pos),
+            LowInstruction(LowInstructionType.addString, "Falsy", pos),
+            LowInstruction(LowInstructionType.call, [1, false], pos),
+          ],
+        ],
+        pos,
+      ),
     ],
     pos,
     context,

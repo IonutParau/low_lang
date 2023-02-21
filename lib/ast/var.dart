@@ -1,5 +1,6 @@
 import 'package:low_lang/ast/ast.dart';
 import 'package:low_lang/vm/context.dart';
+import 'package:low_lang/vm/ir.dart';
 
 class LowVariableNode extends LowAST {
   String name;
@@ -30,5 +31,45 @@ class LowVariableNode extends LowAST {
   @override
   String? markForIgnorance() {
     return null;
+  }
+
+  @override
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
+    if (mode == LowCompilationMode.run) return [];
+
+    if (mode == LowCompilationMode.data) {
+      return context.isLocal(name)
+          ? [
+              LowInstruction(
+                LowInstructionType.clone,
+                context.stackIndex(name),
+                position,
+              ),
+            ]
+          : [
+              LowInstruction(
+                LowInstructionType.getGlobal,
+                name,
+                position,
+              ),
+            ];
+    } else {
+      return context.isLocal(name)
+          ? [
+              LowInstruction(
+                LowInstructionType.set,
+                context.stackIndex(name),
+                position,
+              ),
+            ]
+          : [
+              LowInstruction(
+                LowInstructionType.setGlobal,
+                name,
+                position,
+              ),
+            ];
+    }
   }
 }

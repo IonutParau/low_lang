@@ -1,6 +1,8 @@
 import 'package:low_lang/ast/ast.dart';
 import 'package:low_lang/ast/control_flow.dart';
 import 'package:low_lang/vm/context.dart';
+import 'package:low_lang/vm/errors.dart';
+import 'package:low_lang/vm/ir.dart';
 
 class LowCodeBody extends LowAST {
   List<LowAST> body;
@@ -37,7 +39,9 @@ class LowCodeBody extends LowAST {
       d.addAll(node.handleDependencies(scoped));
 
       // In all of these, the block would always end there, thus anything after that is not a dependency.
-      if (node is LowContinueNode || node is LowBreakNode || node is LowReturnNode) {
+      if (node is LowContinueNode ||
+          node is LowBreakNode ||
+          node is LowReturnNode) {
         break;
       }
 
@@ -53,7 +57,9 @@ class LowCodeBody extends LowAST {
   bool alwaysEnd() {
     for (final node in body) {
       // In all of these, the block would always end there, thus anything after that is not a dependency.
-      if (node is LowContinueNode || node is LowBreakNode || node is LowReturnNode) {
+      if (node is LowContinueNode ||
+          node is LowBreakNode ||
+          node is LowReturnNode) {
         return true;
       }
     }
@@ -64,5 +70,34 @@ class LowCodeBody extends LowAST {
   @override
   String? markForIgnorance() {
     return null;
+  }
+
+  @override
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
+    if (mode != LowCompilationMode.run) {
+      throw "Invalid AST";
+    }
+    final ctx = context.copy();
+
+    final instructions = <LowInstruction>[];
+
+    for (final node in body) {
+      instructions.addAll(node.compile(ctx, LowCompilationMode.run));
+
+      // In all of these, the block would always end there, thus anything after that is not a dependency.
+      if (node is LowContinueNode ||
+          node is LowBreakNode ||
+          node is LowReturnNode) {
+        break;
+      }
+
+      // Bodies might also house these, so we need to check for that
+      if (node is LowCodeBody && node.alwaysEnd()) {
+        break;
+      }
+    }
+
+    return instructions;
   }
 }

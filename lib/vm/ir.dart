@@ -13,6 +13,7 @@ enum LowInstructionType {
   addList,
   addMap,
   addObject,
+  addNull,
   call,
   getGlobal,
   setGlobal,
@@ -88,7 +89,7 @@ class LowInstruction {
           context.push(l);
           break;
         case LowInstructionType.addMap:
-          final pairc = instruction.data;
+          final int pairc = instruction.data;
 
           final m = <dynamic, dynamic>{};
 
@@ -227,6 +228,9 @@ class LowInstruction {
           while (context.size > top) {
             context.pop();
           }
+          break;
+        case LowInstructionType.addNull:
+          context.push(null);
           break;
       }
 

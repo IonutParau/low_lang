@@ -146,7 +146,7 @@ class LowCompilerContext {
     return -1;
   }
 
-  LowCompilerContext linkedCopy([List<String>? startingLocals]) {
+  LowCompilerContext copy([List<String>? startingLocals]) {
     final copy = LowCompilerContext();
 
     copy._stackMirror =

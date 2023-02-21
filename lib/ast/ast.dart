@@ -1,6 +1,7 @@
 import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/errors.dart';
+import 'package:low_lang/vm/ir.dart';
 
 abstract class LowAST {
   final LowTokenPosition position;
@@ -55,5 +56,10 @@ abstract class LowAST {
         rethrow;
       }
     }
+  }
+
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
+    throw UnimplementedError("Not yet implemented");
   }
 }

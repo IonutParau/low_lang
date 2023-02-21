@@ -18,6 +18,8 @@ enum LowInstructionType {
   setGlobal,
   ifCheck,
   whileLoop,
+  forLoop,
+  foreachLoop,
 }
 
 class LowInstruction {
@@ -131,7 +133,7 @@ class LowInstruction {
           } else if (fallback != null) {
             final old = context.size;
             LowInstruction.runBlock(fallback, instruction.position, context);
-            while (old > context.size) {
+            while (context.size > old) {
               context.pop();
             }
           }
@@ -140,7 +142,7 @@ class LowInstruction {
           final List<LowInstruction> check = instruction.data[0];
           final List<LowInstruction> body = instruction.data[1];
 
-          while (true) {
+          while (context.status.status == LowMemoryStatus.running) {
             LowInstruction.runBlock(check, instruction.position, context);
             if (!LowInteropHandler.truthful(
               context,
@@ -150,9 +152,80 @@ class LowInstruction {
 
             final old = context.size;
             LowInstruction.runBlock(body, instruction.position, context);
-            while (old > context.size) {
+            while (context.size > old) {
               context.pop();
             }
+
+            if (context.status.status == LowMemoryStatus.continued) {}
+          }
+          break;
+        case LowInstructionType.forLoop:
+          final List<LowInstruction> startup = instruction.data[0];
+          final List<LowInstruction> condition = instruction.data[1];
+          final List<LowInstruction> step = instruction.data[2];
+          final List<LowInstruction> body = instruction.data[3];
+
+          final old = context.size;
+
+          LowInstruction.runBlock(startup, instruction.position, context);
+
+          while (context.status.status == LowMemoryStatus.running) {
+            LowInstruction.runBlock(condition, instruction.position, context);
+            if (!LowInteropHandler.truthful(
+              context,
+              instruction.position,
+              context.pop(),
+            )) break;
+
+            final old = context.size;
+            LowInstruction.runBlock(body, caller, context);
+            while (context.size > old) {
+              context.pop();
+            }
+
+            LowInstruction.runBlock(step, caller, context);
+            while (context.size > old) {
+              context.pop();
+            }
+
+            if (context.status.status == LowMemoryStatus.continued) {
+              context.status.status = LowMemoryStatus.running;
+            }
+          }
+
+          if (context.status.status == LowMemoryStatus.broke) {
+            context.status.status = LowMemoryStatus.running;
+          }
+
+          while (context.size > old) {
+            context.pop();
+          }
+          break;
+        case LowInstructionType.foreachLoop:
+          final val = context.pop();
+          final top = context.size;
+          final int argc = instruction.data[0];
+          final List<LowInstruction> body = instruction.data[1];
+
+          LowInteropHandler.iterate(context, instruction.position, val, (args) {
+            final top = context.size;
+
+            for (var i = 0; i < argc; i++) {
+              if (i < args.length) {
+                context.push(args[i]);
+              } else {
+                context.push(null);
+              }
+            }
+
+            LowInstruction.runBlock(body, instruction.position, context);
+
+            while (context.size > top) {
+              context.pop();
+            }
+          });
+          while (context.size > top) {
+            context.pop();
           }
           break;
       }

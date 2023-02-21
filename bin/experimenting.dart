@@ -13,18 +13,19 @@ void main() {
 
   LowInstruction.runBlock(
     [
-      LowInstruction(LowInstructionType.addBool, true, pos),
+      LowInstruction(LowInstructionType.addInt, 1, pos),
+      LowInstruction(LowInstructionType.addInt, 2, pos),
+      LowInstruction(LowInstructionType.addInt, 3, pos),
+      LowInstruction(LowInstructionType.addInt, 4, pos),
+      LowInstruction(LowInstructionType.addInt, 5, pos),
+      LowInstruction(LowInstructionType.addList, 5, pos),
       LowInstruction(
-        LowInstructionType.ifCheck,
+        LowInstructionType.foreachLoop,
         [
+          1,
           [
             LowInstruction(LowInstructionType.getGlobal, "print", pos),
-            LowInstruction(LowInstructionType.addString, "Truthful", pos),
-            LowInstruction(LowInstructionType.call, [1, false], pos),
-          ],
-          [
-            LowInstruction(LowInstructionType.getGlobal, "print", pos),
-            LowInstruction(LowInstructionType.addString, "Falsy", pos),
+            LowInstruction(LowInstructionType.clone, -2, pos),
             LowInstruction(LowInstructionType.call, [1, false], pos),
           ],
         ],

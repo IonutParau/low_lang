@@ -139,8 +139,12 @@ class LowCompilerContext {
   void define(String name) => _stackMirror.add(name);
   void name(String name) => _stackMirror.last = name;
   bool isLocal(String name) => _stackMirror.contains(name);
-  int stackIndex(String name) =>
-      _stackMirror.indexOf(name) - _stackMirror.length;
+  int stackIndex(String name) {
+    for (var i = _stackMirror.length - 1; i >= 0; i--) {
+      if (_stackMirror[i] == name) return i;
+    }
+    return -1;
+  }
 
   LowCompilerContext linkedCopy([List<String>? startingLocals]) {
     final copy = LowCompilerContext();

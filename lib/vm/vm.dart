@@ -32,6 +32,8 @@ class LowVM {
     _rootContext.setGlobal("ARGS", []);
   }
 
+  LowContext get context => _rootContext;
+
   dynamic runCode(String code, String filename) {
     final parsed = _parser.parseCode(code, filename);
     final context = _rootContext.lexicallyScopedCopy(filePath: filename);

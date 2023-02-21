@@ -1,6 +1,7 @@
 import 'package:low_lang/ast/call.dart';
 import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/vm/context.dart';
+import 'package:low_lang/vm/interop.dart';
 
 enum LowInstructionType {
   clone,
@@ -15,6 +16,7 @@ enum LowInstructionType {
   call,
   getGlobal,
   setGlobal,
+  ifCheck,
 }
 
 class LowInstruction {
@@ -26,7 +28,9 @@ class LowInstruction {
 
   static dynamic runBlock(List<LowInstruction> instructions,
       LowTokenPosition caller, LowContext context) {
-    for (var instruction in instructions) {
+    for (var i = 0; i < instructions.length; i++) {
+      final instruction = instructions[i];
+
       switch (instruction.type) {
         case LowInstructionType.addInt:
           context.push(instruction.data as int);
@@ -110,6 +114,26 @@ class LowInstruction {
           final String name = instruction.data;
           final val = context.pop();
           context.setGlobal(name, val);
+          break;
+        case LowInstructionType.ifCheck:
+          final toCheck = context.pop();
+          final List<LowInstruction> body = instruction.data[0];
+          final List<LowInstruction>? fallback = instruction.data[1];
+
+          if (LowInteropHandler.truthful(
+              context, instruction.position, toCheck)) {
+            final old = context.size;
+            LowInstruction.runBlock(body, instruction.position, context);
+            while (old > context.size) {
+              context.pop();
+            }
+          } else if (fallback != null) {
+            final old = context.size;
+            LowInstruction.runBlock(fallback, instruction.position, context);
+            while (old > context.size) {
+              context.pop();
+            }
+          }
           break;
       }
 

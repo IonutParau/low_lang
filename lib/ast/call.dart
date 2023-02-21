@@ -29,8 +29,7 @@ class LowCallValue extends LowAST {
 
   @override
   Set<String> dependencies(Set<String> toIgnore) {
-    return [value, ...params]
-        .fold({}, (curr, ast) => curr..addAll(ast.dependencies(toIgnore)));
+    return [value, ...params].fold({}, (curr, ast) => curr..addAll(ast.dependencies(toIgnore)));
   }
 
   @override
@@ -39,27 +38,30 @@ class LowCallValue extends LowAST {
   }
 
   @override
-  List<LowInstruction> compile(
-      LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
     if (mode == LowCompilationMode.modify) {
       throw "Invalid AST";
     }
 
-    return [
+    final inst = [
       ...value.compile(context, LowCompilationMode.data),
-      for (final arg in params)
-        ...arg.compile(context, LowCompilationMode.data),
+      for (final arg in params) ...arg.compile(context, LowCompilationMode.data),
       LowInstruction(
         LowInstructionType.call,
         [params.length, mode == LowCompilationMode.data],
         position,
       ),
     ];
+
+    if (mode == LowCompilationMode.data) {
+      context.push();
+    }
+
+    return inst;
   }
 }
 
-dynamic lowHandleCall(
-    dynamic fn, List args, LowTokenPosition position, LowContext context) {
+dynamic lowHandleCall(dynamic fn, List args, LowTokenPosition position, LowContext context) {
   context.stackTrace.push(position);
   final returned = LowInteropHandler.invoke(context, position, fn, args);
   context.stackTrace.pop();

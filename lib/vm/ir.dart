@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:low_lang/ast/call.dart';
 import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/vm/context.dart';
@@ -14,6 +16,8 @@ enum LowInstructionType {
   addMap,
   addObject,
   addNull,
+  addBuffer,
+  addFunction,
   call,
   getGlobal,
   setGlobal,
@@ -30,8 +34,12 @@ class LowInstruction {
 
   LowInstruction(this.type, this.data, this.position);
 
-  static dynamic runBlock(List<LowInstruction> instructions,
-      LowTokenPosition caller, LowContext context) {
+  @override
+  String toString() {
+    return '${type.name} $data $position';
+  }
+
+  static dynamic runBlock(List<LowInstruction> instructions, LowTokenPosition caller, LowContext context) {
     for (var i = 0; i < instructions.length; i++) {
       final instruction = instructions[i];
 
@@ -124,8 +132,7 @@ class LowInstruction {
           final List<LowInstruction> body = instruction.data[0];
           final List<LowInstruction>? fallback = instruction.data[1];
 
-          if (LowInteropHandler.truthful(
-              context, instruction.position, toCheck)) {
+          if (LowInteropHandler.truthful(context, instruction.position, toCheck)) {
             final old = context.size;
             LowInstruction.runBlock(body, instruction.position, context);
             while (old > context.size) {
@@ -231,6 +238,20 @@ class LowInstruction {
           break;
         case LowInstructionType.addNull:
           context.push(null);
+          break;
+        case LowInstructionType.addBuffer:
+          final int n = instruction.data;
+          var l = [];
+
+          for (var i = 0; i < n; i++) {
+            l.add(context.pop());
+          }
+
+          l = l.reversed.toList();
+
+          context.push(Uint8List.fromList(l.whereType<int>().toList()));
+          break;
+        case LowInstructionType.addFunction:
           break;
       }
 

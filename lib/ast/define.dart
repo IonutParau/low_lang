@@ -3,6 +3,7 @@ import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/errors.dart';
 import 'package:low_lang/vm/interop.dart';
+import 'package:low_lang/vm/ir.dart';
 import 'package:low_lang/vm/vm.dart';
 
 class LowDefineVariable extends LowAST {
@@ -37,6 +38,23 @@ class LowDefineVariable extends LowAST {
   @override
   String? markForIgnorance() {
     return static ? null : name;
+  }
+
+  @override
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+    if (mode != LowCompilationMode.run) {
+      throw "Invalid AST";
+    }
+
+    if (static) {
+      return [...value.compile(context, LowCompilationMode.data), LowInstruction(LowInstructionType.setGlobal, name, position)];
+    }
+
+    final inst = value.compile(context, LowCompilationMode.data);
+
+    context.name(name);
+
+    return inst;
   }
 }
 

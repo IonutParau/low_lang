@@ -75,10 +75,7 @@ class LowContext {
     _globals[name] = v;
   }
 
-  LowContext lexicallyScopedCopy(
-      {List<String>? onlyPassThrough,
-      bool copyStatus = false,
-      String? filePath}) {
+  LowContext lexicallyScopedCopy({List<String>? onlyPassThrough, bool copyStatus = false, String? filePath}) {
     final lm = LowContext(stackTrace, vm, filePath ?? this.filePath);
 
     lm._stack = [..._stack];
@@ -136,6 +133,7 @@ class LowCompilerContext {
   List<String> _stackMirror = [];
 
   void push() => _stackMirror.add("");
+  void pop() => _stackMirror.removeLast();
   void define(String name) => _stackMirror.add(name);
   void name(String name) => _stackMirror.last = name;
   bool isLocal(String name) => _stackMirror.contains(name);
@@ -149,9 +147,10 @@ class LowCompilerContext {
   LowCompilerContext copy([List<String>? startingLocals]) {
     final copy = LowCompilerContext();
 
-    copy._stackMirror =
-        startingLocals == null ? [..._stackMirror] : [...startingLocals];
+    copy._stackMirror = startingLocals == null ? [..._stackMirror] : [...startingLocals];
 
     return copy;
   }
+
+  int get size => _stackMirror.length;
 }

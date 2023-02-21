@@ -34,12 +34,11 @@ class LowVariableNode extends LowAST {
   }
 
   @override
-  List<LowInstruction> compile(
-      LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
     if (mode == LowCompilationMode.run) return [];
 
     if (mode == LowCompilationMode.data) {
-      return context.isLocal(name)
+      final inst = context.isLocal(name)
           ? [
               LowInstruction(
                 LowInstructionType.clone,
@@ -54,8 +53,10 @@ class LowVariableNode extends LowAST {
                 position,
               ),
             ];
+      context.push();
+      return inst;
     } else {
-      return context.isLocal(name)
+      final inst = context.isLocal(name)
           ? [
               LowInstruction(
                 LowInstructionType.set,
@@ -70,6 +71,8 @@ class LowVariableNode extends LowAST {
                 position,
               ),
             ];
+      context.push();
+      return inst;
     }
   }
 }

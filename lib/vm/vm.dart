@@ -1,6 +1,7 @@
 import 'package:low_lang/parser/parser.dart';
 import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/stdlib/fs_api.dart';
+import 'package:low_lang/vm/ir.dart';
 import 'package:low_lang/vm/stack_trace.dart';
 import 'package:low_lang/stdlib/stdlib.dart';
 
@@ -8,8 +9,7 @@ import 'context.dart';
 
 typedef LowObject = Map<String, dynamic>;
 
-typedef LowFunction = dynamic Function(
-    List args, LowContext context, LowTokenPosition callerPosition);
+typedef LowFunction = dynamic Function(List args, LowContext context, LowTokenPosition callerPosition);
 
 void minArgLength(List args, int min) {
   while (args.length < min) {
@@ -21,9 +21,15 @@ class LowVM {
   late LowContext _rootContext;
   final _parser = LowParser();
   final Map<String, LowLibrary> libraries = {};
+  final _flags = <String>{};
 
   LowVM() {
     _init();
+  }
+
+  // Adds to the VM an experimental flag, which tells the VM to behave a little differently
+  void addExperimentalFlag(String flag) {
+    _flags.add(flag);
   }
 
   void _init() {
@@ -34,10 +40,19 @@ class LowVM {
 
   LowContext get context => _rootContext;
 
+  List<LowInstruction> compile(String code, String filename) {
+    return _parser.parseCode(code, filename).compile(LowCompilerContext(), LowCompilationMode.run);
+  }
+
   dynamic runCode(String code, String filename) {
     final parsed = _parser.parseCode(code, filename);
     final context = _rootContext.lexicallyScopedCopy(filePath: filename);
 
+    if (_flags.contains("compiler")) {
+      final compiled = parsed.compile(LowCompilerContext(), LowCompilationMode.run);
+
+      return LowInstruction.runBlock(compiled, parsed.position, context);
+    }
     parsed.run(context);
 
     return context.returnedValue;

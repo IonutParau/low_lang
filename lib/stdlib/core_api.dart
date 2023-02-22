@@ -22,6 +22,9 @@ Map<String, dynamic> lowCoreAPI(LowVM vm) {
     "map": "Map",
     "buffer": "Buffer",
     "bool": "Bool",
+    "any": (List args, LowContext context, LowTokenPosition position) {
+      return true;
+    },
     "listOf": (List args, LowContext context, LowTokenPosition position) {
       minArgLength(args, 1);
 

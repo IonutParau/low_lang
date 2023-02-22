@@ -41,17 +41,13 @@ class LowDefineVariable extends LowAST {
   }
 
   @override
-  List<LowInstruction> compile(
-      LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
     if (mode != LowCompilationMode.run) {
       throw "Invalid AST";
     }
 
     if (static) {
-      return [
-        ...value.compile(context, LowCompilationMode.data),
-        LowInstruction(LowInstructionType.setGlobal, name, position)
-      ];
+      return [...value.compile(context, LowCompilationMode.data), LowInstruction(LowInstructionType.setGlobal, name, position)];
     }
 
     final inst = value.compile(context, LowCompilationMode.data);
@@ -70,13 +66,11 @@ class LowDefineFunction extends LowAST {
   LowAST body;
   bool static;
 
-  LowDefineFunction(this.name, this.static, this.body, this.params, this.types,
-      this.returnType, super.position);
+  LowDefineFunction(this.name, this.static, this.body, this.params, this.types, this.returnType, super.position);
 
   @override
   rawget(LowContext context) {
-    final val = createLowFunction(context, position, params, types, returnType,
-        body, dependencies({}).toList());
+    final val = createLowFunction(context, position, params, types, returnType, body, dependencies({}).toList());
 
     static ? context.setGlobal(name, val) : context.defineLocal(name, val);
     return val;
@@ -96,10 +90,7 @@ class LowDefineFunction extends LowAST {
   Set<String> dependencies(Set<String> toIgnore) {
     return {
       ...body.dependencies({...toIgnore, ...params}),
-      ...types.fold<Set<String>>(
-          {},
-          (current, type) => current
-            ..addAll(type?.dependencies({...toIgnore, ...params}) ?? {})),
+      ...types.fold<Set<String>>({}, (current, type) => current..addAll(type?.dependencies({...toIgnore, ...params}) ?? {})),
       ...(returnType?.dependencies(toIgnore) ?? {}),
     };
   }
@@ -110,8 +101,7 @@ class LowDefineFunction extends LowAST {
   }
 
   @override
-  List<LowInstruction> compile(
-      LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
     if (mode != LowCompilationMode.run) throw "Invalid AST";
     final ctx = LowCompilerContext();
 
@@ -121,11 +111,9 @@ class LowDefineFunction extends LowAST {
     for (var i = 0; i < argc; i++) {
       ctx.define(params[i]);
     }
-    final List<List<LowInstruction>> argt = types.map((type) {
+    final List<List<LowInstruction>?> argt = types.map((type) {
       if (type == null) {
-        return [
-          LowInstruction(LowInstructionType.addBool, true, position),
-        ];
+        return null;
       }
 
       return type.compile(ctx.copy(), LowCompilationMode.data);
@@ -145,17 +133,9 @@ class LowDefineFunction extends LowAST {
   }
 }
 
-LowFunction createLowFunction(
-    LowContext oldCtx,
-    LowTokenPosition position,
-    List<String> params,
-    List<LowAST?> types,
-    LowAST? returnType,
-    LowAST body,
-    List<String> dependencies) {
+LowFunction createLowFunction(LowContext oldCtx, LowTokenPosition position, List<String> params, List<LowAST?> types, LowAST? returnType, LowAST body, List<String> dependencies) {
   return (List args, LowContext context, LowTokenPosition callerPosition) {
-    final context = oldCtx.lexicallyScopedCopy(
-        copyStatus: true, onlyPassThrough: dependencies);
+    final context = oldCtx.lexicallyScopedCopy(copyStatus: true, onlyPassThrough: dependencies);
 
     for (var i = 0; i < params.length; i++) {
       final param = params[i];
@@ -167,9 +147,7 @@ LowFunction createLowFunction(
       final typeAST = types[i];
       final val = i < args.length ? args[i] : null;
 
-      if (typeAST != null &&
-          !LowInteropHandler.matchesType(
-              context, position, val, typeAST.get(context))) {
+      if (typeAST != null && !LowInteropHandler.matchesType(context, position, val, typeAST.get(context))) {
         throw LowRuntimeError(
           "Argument #${i + 1} does not match type expected by called function",
           callerPosition,
@@ -183,12 +161,7 @@ LowFunction createLowFunction(
     final rv = context.returnedValue;
 
     if (returnType != null) {
-      if (!LowInteropHandler.matchesType(
-          context, position, rv, returnType.get(context)))
-        throw LowRuntimeError(
-            "Return Value of function is not what was expected",
-            position,
-            context.stackTrace);
+      if (!LowInteropHandler.matchesType(context, position, rv, returnType.get(context))) throw LowRuntimeError("Return Value of function is not what was expected", position, context.stackTrace);
     }
 
     return rv;

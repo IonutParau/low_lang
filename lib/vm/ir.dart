@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:low_lang/ast/call.dart';
-import 'package:low_lang/low_lang.dart';
 import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/errors.dart';
@@ -10,6 +9,7 @@ import 'package:low_lang/vm/interop.dart';
 enum LowInstructionType {
   clone,
   set,
+  pop,
   addInt,
   addDouble,
   addString,
@@ -41,8 +41,7 @@ class LowInstruction {
     return '${type.name} $data $position';
   }
 
-  static dynamic runBlock(List<LowInstruction> instructions,
-      LowTokenPosition caller, LowContext context) {
+  static dynamic runBlock(List<LowInstruction> instructions, LowTokenPosition caller, LowContext context) {
     for (var i = 0; i < instructions.length; i++) {
       final instruction = instructions[i];
 
@@ -135,8 +134,7 @@ class LowInstruction {
           final List<LowInstruction> body = instruction.data[0];
           final List<LowInstruction>? fallback = instruction.data[1];
 
-          if (LowInteropHandler.truthful(
-              context, instruction.position, toCheck)) {
+          if (LowInteropHandler.truthful(context, instruction.position, toCheck)) {
             final old = context.size;
             LowInstruction.runBlock(body, instruction.position, context);
             while (old > context.size) {
@@ -168,7 +166,7 @@ class LowInstruction {
               context.pop();
             }
 
-            if (context.status.status == LowMemoryStatus.continued) {}
+            if (context.status.status == LowMemoryStatus.continued) continue;
           }
           break;
         case LowInstructionType.forLoop:
@@ -258,7 +256,7 @@ class LowInstruction {
         case LowInstructionType.addFunction:
           final int argc = instruction.data[0];
           final List<int> upvals = instruction.data[1];
-          final List<List<LowInstruction>> argt = instruction.data[2];
+          final List<List<LowInstruction>?> argt = instruction.data[2];
           final List<LowInstruction> body = instruction.data[3];
 
           final List upvalv = upvals.map(context.getAt).toList();
@@ -268,21 +266,27 @@ class LowInstruction {
             (List args, LowContext context, LowTokenPosition caller) {
               final old = context.size;
               upvalv.forEach(context.push);
+              final argv = [];
               for (var i = 0; i < argc; i++) {
                 if (i < args.length) {
                   context.push(args[i]);
+                  argv.add(args[i]);
                 } else {
                   context.push(null);
+                  argv.add(null);
                 }
               }
 
               for (var i = 0; i < argc; i++) {
+                if (argt[i] == null) continue;
+
                 final old = context.size;
 
-                LowInstruction.runBlock(argt[i], pos, context);
-                if (!LowInteropHandler.truthful(
+                LowInstruction.runBlock(argt[i]!, pos, context);
+                if (!LowInteropHandler.matchesType(
                   context,
                   caller,
+                  argv[i],
                   context.pop(),
                 )) {
                   throw LowRuntimeError(
@@ -307,6 +311,13 @@ class LowInstruction {
               return ctx.returnedValue;
             },
           );
+          break;
+        case LowInstructionType.pop:
+          final int c = instruction.data;
+
+          for (var i = 0; i < c; i++) {
+            context.pop();
+          }
           break;
       }
 

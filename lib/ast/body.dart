@@ -91,6 +91,11 @@ class LowCodeBody extends LowAST {
       }
     }
 
+    final extra = ctx.size - context.size;
+    if (extra != 0) {
+      instructions.add(LowInstruction(LowInstructionType.pop, extra, position));
+    }
+
     return instructions;
   }
 }

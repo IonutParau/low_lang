@@ -1,6 +1,7 @@
 import 'package:low_lang/ast/ast.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/interop.dart';
+import 'package:low_lang/vm/ir.dart';
 
 class LowForNode extends LowAST {
   LowAST startup;
@@ -46,6 +47,25 @@ class LowForNode extends LowAST {
 
   @override
   String? markForIgnorance() => null;
+
+  @override
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+    if (mode != LowCompilationMode.run) throw "Invalid AST";
+
+    final ctx = context.copy();
+
+    final startupIR = startup.compile(ctx, mode);
+    final conditionIR = condition.compile(ctx, LowCompilationMode.data);
+    ctx.pop();
+    final execCtx = ctx.copy();
+    final bodyIR = body.compile(execCtx, mode);
+    final stepIR = afterwards.compile(execCtx, LowCompilationMode.run);
+
+    return [
+      LowInstruction(LowInstructionType.forLoop, [startupIR, conditionIR, stepIR, bodyIR], position),
+      if (ctx.size > context.size) LowInstruction(LowInstructionType.pop, ctx.size - context.size, position),
+    ];
+  }
 }
 
 class LowWhileNode extends LowAST {
@@ -87,6 +107,18 @@ class LowWhileNode extends LowAST {
 
   @override
   String? markForIgnorance() => null;
+
+  @override
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+    if (mode != LowCompilationMode.run) throw "Invalid AST";
+
+    final checkIR = condition.compile(context.copy(), LowCompilationMode.data);
+    final bodyIR = body.compile(context.copy(), LowCompilationMode.run);
+
+    return [
+      LowInstruction(LowInstructionType.whileLoop, [checkIR, bodyIR], position)
+    ];
+  }
 }
 
 class LowForeachNode extends LowAST {
@@ -131,4 +163,20 @@ class LowForeachNode extends LowAST {
 
   @override
   String? markForIgnorance() => null;
+
+  @override
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+    if (mode != LowCompilationMode.run) throw "Invalid AST";
+
+    final ctx = context.copy();
+
+    final inst = value.compile(ctx, LowCompilationMode.data);
+    ctx.pop();
+    final argc = vars.length;
+    vars.forEach(ctx.define);
+    final bodyIR = body.compile(ctx, mode);
+
+    inst.add(LowInstruction(LowInstructionType.foreachLoop, [argc, bodyIR], position));
+    return inst;
+  }
 }

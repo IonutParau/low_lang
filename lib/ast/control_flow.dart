@@ -1,6 +1,7 @@
 import 'package:low_lang/ast/ast.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/interop.dart';
+import 'package:low_lang/vm/ir.dart';
 
 class LowReturnNode extends LowAST {
   LowAST value;
@@ -74,6 +75,16 @@ class LowIfNode extends LowAST {
   @override
   String? markForIgnorance() {
     return null;
+  }
+
+  @override
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+    if (mode != LowCompilationMode.run) throw "Invalid AST";
+    final inst = [...condition.compile(context, LowCompilationMode.data)];
+    context.pop();
+    inst.add(LowInstruction(LowInstructionType.ifCheck, [body.compile(context.copy(), LowCompilationMode.run), fallback?.compile(context.copy(), LowCompilationMode.run)], position));
+
+    return inst;
   }
 }
 

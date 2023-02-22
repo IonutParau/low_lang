@@ -153,6 +153,37 @@ class LowLambdaFunction extends LowAST {
       };
   @override
   String? markForIgnorance() => null;
+
+  @override
+  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+    if (mode == LowCompilationMode.modify) throw "Invalid AST";
+    if (mode == LowCompilationMode.run) return [];
+    final ctx = LowCompilerContext();
+
+    final dep = dependencies({});
+    dep.where(context.isLocal).forEach(ctx.define);
+    final argc = params.length;
+    for (var i = 0; i < argc; i++) {
+      ctx.define(params[i]);
+    }
+    final List<List<LowInstruction>?> argt = types.map((type) {
+      if (type == null) {
+        return null;
+      }
+
+      return type.compile(ctx.copy(), LowCompilationMode.data);
+    }).toList();
+    final upvals = dep.where(ctx.isLocal).map(ctx.stackIndex).toList();
+
+    final inst = [
+      LowInstruction(
+        LowInstructionType.addFunction,
+        [argc, upvals, argt, body.compile(ctx, LowCompilationMode.run)],
+        position,
+      ),
+    ];
+    return inst;
+  }
 }
 
 class LowListNode extends LowAST {

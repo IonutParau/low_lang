@@ -9,11 +9,8 @@ void main() {
   vm.loadLibraries();
 
   vm.runCode('''
-fn F(x, y, z) {
-  print(x)
-  print(y)
-  print(z)
+foreach(element, index in [5, 30, 2]) {
+  print([element, index])
 }
-F(50, 20, 10)
 ''', 'test.low');
 }

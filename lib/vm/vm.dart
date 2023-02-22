@@ -9,7 +9,8 @@ import 'context.dart';
 
 typedef LowObject = Map<String, dynamic>;
 
-typedef LowFunction = dynamic Function(List args, LowContext context, LowTokenPosition callerPosition);
+typedef LowFunction = dynamic Function(
+    List args, LowContext context, LowTokenPosition callerPosition);
 
 void minArgLength(List args, int min) {
   while (args.length < min) {
@@ -41,7 +42,9 @@ class LowVM {
   LowContext get context => _rootContext;
 
   List<LowInstruction> compile(String code, String filename) {
-    return _parser.parseCode(code, filename).compile(LowCompilerContext(), LowCompilationMode.run);
+    return _parser
+        .parseCode(code, filename)
+        .compile(LowCompilerContext(), LowCompilationMode.run);
   }
 
   dynamic runCode(String code, String filename) {
@@ -49,7 +52,10 @@ class LowVM {
     final context = _rootContext.lexicallyScopedCopy(filePath: filename);
 
     if (_flags.contains("compiler")) {
-      final compiled = parsed.compile(LowCompilerContext(), LowCompilationMode.run);
+      final cc = LowCompilerContext();
+      final compiled = parsed.compile(cc, LowCompilationMode.run);
+
+      print(compiled);
 
       return LowInstruction.runBlock(compiled, parsed.position, context);
     }

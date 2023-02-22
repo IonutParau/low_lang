@@ -9,7 +9,11 @@ void main() {
   vm.loadLibraries();
 
   vm.runCode('''
-var n = [3, 2, 5, read]
-print(n)
+fn F(x, y, z) {
+  print(x)
+  print(y)
+  print(z)
+}
+F(50, 20, 10)
 ''', 'test.low');
 }

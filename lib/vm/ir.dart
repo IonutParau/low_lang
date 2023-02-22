@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:low_lang/ast/call.dart';
+import 'package:low_lang/low_lang.dart';
 import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/vm/context.dart';
+import 'package:low_lang/vm/errors.dart';
 import 'package:low_lang/vm/interop.dart';
 
 enum LowInstructionType {
@@ -39,7 +41,8 @@ class LowInstruction {
     return '${type.name} $data $position';
   }
 
-  static dynamic runBlock(List<LowInstruction> instructions, LowTokenPosition caller, LowContext context) {
+  static dynamic runBlock(List<LowInstruction> instructions,
+      LowTokenPosition caller, LowContext context) {
     for (var i = 0; i < instructions.length; i++) {
       final instruction = instructions[i];
 
@@ -132,7 +135,8 @@ class LowInstruction {
           final List<LowInstruction> body = instruction.data[0];
           final List<LowInstruction>? fallback = instruction.data[1];
 
-          if (LowInteropHandler.truthful(context, instruction.position, toCheck)) {
+          if (LowInteropHandler.truthful(
+              context, instruction.position, toCheck)) {
             final old = context.size;
             LowInstruction.runBlock(body, instruction.position, context);
             while (old > context.size) {
@@ -252,11 +256,65 @@ class LowInstruction {
           context.push(Uint8List.fromList(l.whereType<int>().toList()));
           break;
         case LowInstructionType.addFunction:
+          final int argc = instruction.data[0];
+          final List<int> upvals = instruction.data[1];
+          final List<List<LowInstruction>> argt = instruction.data[2];
+          final List<LowInstruction> body = instruction.data[3];
+
+          final List upvalv = upvals.map(context.getAt).toList();
+          final pos = instruction.position;
+
+          context.push(
+            (List args, LowContext context, LowTokenPosition caller) {
+              final old = context.size;
+              upvalv.forEach(context.push);
+              for (var i = 0; i < argc; i++) {
+                if (i < args.length) {
+                  context.push(args[i]);
+                } else {
+                  context.push(null);
+                }
+              }
+
+              for (var i = 0; i < argc; i++) {
+                final old = context.size;
+
+                LowInstruction.runBlock(argt[i], pos, context);
+                if (!LowInteropHandler.truthful(
+                  context,
+                  caller,
+                  context.pop(),
+                )) {
+                  throw LowRuntimeError(
+                    "Argument #${i + 1} does not match type expected by called function",
+                    caller,
+                    context.stackTrace,
+                  );
+                }
+
+                while (context.size > old) {
+                  context.pop();
+                }
+              }
+
+              final ctx = context.lexicallyScopedCopy(copyStatus: true);
+
+              LowInstruction.runBlock(body, caller, ctx);
+
+              while (context.size > old) {
+                context.pop();
+              }
+              return ctx.returnedValue;
+            },
+          );
           break;
       }
 
       if (context.status.status == LowMemoryStatus.returned) {
         return context.returnedValue;
+      }
+      if (context.status.status != LowMemoryStatus.running) {
+        break;
       }
     }
 

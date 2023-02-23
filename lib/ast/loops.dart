@@ -9,7 +9,8 @@ class LowForNode extends LowAST {
   LowAST body;
   LowAST afterwards;
 
-  LowForNode(this.startup, this.condition, this.body, this.afterwards, super.position);
+  LowForNode(
+      this.startup, this.condition, this.body, this.afterwards, super.position);
 
   @override
   rawget(LowContext context) {
@@ -26,7 +27,8 @@ class LowForNode extends LowAST {
       if (!LowInteropHandler.truthful(ctx, position, condition.get(ctx))) break;
       body.run(ctx);
       afterwards.run(ctx);
-      if (ctx.status.status == LowMemoryStatus.continued) ctx.status.status = LowMemoryStatus.running;
+      if (ctx.status.status == LowMemoryStatus.continued)
+        ctx.status.status = LowMemoryStatus.running;
     }
 
     if (ctx.status.status == LowMemoryStatus.broke) {
@@ -42,14 +44,20 @@ class LowForNode extends LowAST {
   @override
   Set<String> dependencies(Set<String> toIgnore) {
     final scoped = {...toIgnore};
-    return {...startup.handleDependencies(scoped), ...condition.dependencies(scoped), ...body.dependencies(scoped), ...afterwards.dependencies(scoped)};
+    return {
+      ...startup.handleDependencies(scoped),
+      ...condition.dependencies(scoped),
+      ...body.dependencies(scoped),
+      ...afterwards.dependencies(scoped)
+    };
   }
 
   @override
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     if (mode != LowCompilationMode.run) throw "Invalid AST";
 
     final ctx = context.copy();
@@ -62,8 +70,16 @@ class LowForNode extends LowAST {
     final stepIR = afterwards.compile(execCtx, LowCompilationMode.run);
 
     return [
-      LowInstruction(LowInstructionType.forLoop, [startupIR, conditionIR, stepIR, bodyIR], position),
-      if (ctx.size > context.size) LowInstruction(LowInstructionType.pop, ctx.size - context.size, position),
+      LowInstruction(
+        LowInstructionType.forLoop,
+        [
+          startupIR,
+          conditionIR,
+          stepIR,
+          bodyIR,
+        ],
+        position,
+      ),
     ];
   }
 }
@@ -86,7 +102,9 @@ class LowWhileNode extends LowAST {
     while (ctx.status.status == LowMemoryStatus.running) {
       if (!LowInteropHandler.truthful(ctx, position, condition.get(ctx))) break;
       body.run(ctx);
-      if (ctx.status.status == LowMemoryStatus.continued) ctx.status.status = LowMemoryStatus.running;
+      if (ctx.status.status == LowMemoryStatus.continued) {
+        ctx.status.status = LowMemoryStatus.running;
+      }
     }
 
     if (ctx.status.status == LowMemoryStatus.broke) {
@@ -109,7 +127,8 @@ class LowWhileNode extends LowAST {
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     if (mode != LowCompilationMode.run) throw "Invalid AST";
 
     final checkIR = condition.compile(context.copy(), LowCompilationMode.data);
@@ -165,7 +184,8 @@ class LowForeachNode extends LowAST {
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     if (mode != LowCompilationMode.run) throw "Invalid AST";
 
     final ctx = context.copy();
@@ -176,7 +196,8 @@ class LowForeachNode extends LowAST {
     vars.forEach(ctx.define);
     final bodyIR = body.compile(ctx, mode);
 
-    inst.add(LowInstruction(LowInstructionType.foreachLoop, [argc, bodyIR], position));
+    inst.add(LowInstruction(
+        LowInstructionType.foreachLoop, [argc, bodyIR], position));
     return inst;
   }
 }

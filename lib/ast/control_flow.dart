@@ -1,4 +1,5 @@
 import 'package:low_lang/ast/ast.dart';
+import 'package:low_lang/ast/literals.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/interop.dart';
 import 'package:low_lang/vm/ir.dart';
@@ -33,6 +34,20 @@ class LowReturnNode extends LowAST {
   String? markForIgnorance() {
     return null;
   }
+
+  @override
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
+    if (mode != LowCompilationMode.run) throw "Invalid AST";
+
+    final v = value.compile(context, LowCompilationMode.data);
+    context.pop();
+
+    return [
+      ...v,
+      LowInstruction(LowInstructionType.returnValue, null, position)
+    ];
+  }
 }
 
 class LowIfNode extends LowAST {
@@ -49,7 +64,8 @@ class LowIfNode extends LowAST {
 
   @override
   void rawrun(LowContext context) {
-    final shouldRun = LowInteropHandler.truthful(context, position, condition.get(context));
+    final shouldRun =
+        LowInteropHandler.truthful(context, position, condition.get(context));
 
     if (shouldRun) {
       body.rawrun(context);
@@ -78,11 +94,18 @@ class LowIfNode extends LowAST {
   }
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     if (mode != LowCompilationMode.run) throw "Invalid AST";
     final inst = [...condition.compile(context, LowCompilationMode.data)];
     context.pop();
-    inst.add(LowInstruction(LowInstructionType.ifCheck, [body.compile(context.copy(), LowCompilationMode.run), fallback?.compile(context.copy(), LowCompilationMode.run)], position));
+    inst.add(LowInstruction(
+        LowInstructionType.ifCheck,
+        [
+          body.compile(context.copy(), LowCompilationMode.run),
+          fallback?.compile(context.copy(), LowCompilationMode.run)
+        ],
+        position));
 
     return inst;
   }
@@ -115,6 +138,14 @@ class LowContinueNode extends LowAST {
   String? markForIgnorance() {
     return null;
   }
+
+  @override
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
+    if (mode != LowCompilationMode.run) throw "Invalid AST";
+
+    return [LowInstruction(LowInstructionType.skipLoop, null, position)];
+  }
 }
 
 class LowBreakNode extends LowAST {
@@ -143,5 +174,13 @@ class LowBreakNode extends LowAST {
   @override
   String? markForIgnorance() {
     return null;
+  }
+
+  @override
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
+    if (mode != LowCompilationMode.run) throw "Invalid AST";
+
+    return [LowInstruction(LowInstructionType.breakLoop, null, position)];
   }
 }

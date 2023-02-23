@@ -764,15 +764,17 @@ class LowParser {
         if (argtoken.length > 1) {
           if (argtoken[1].value != ":") {
             throw LowParsingFailure(
-                "Please separate struct field and type by a :",
-                argtoken[1].position,
-                lines);
+              "Please separate struct field and type by a :",
+              argtoken[1].position,
+              lines,
+            );
           }
           if (argtoken.length == 2) {
             throw LowParsingFailure(
-                "Please separate struct field and type by a :",
-                argtoken[1].position,
-                lines);
+              "Please separate struct field and type by a :",
+              argtoken[1].position,
+              lines,
+            );
           }
 
           argtypes

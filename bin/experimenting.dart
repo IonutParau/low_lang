@@ -9,6 +9,6 @@ void main() {
   vm.loadLibraries();
 
   vm.runCode('''
-[50, 30] -> print
+print("Hello, world!")
 ''', 'test.low');
 }

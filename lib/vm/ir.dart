@@ -30,6 +30,9 @@ enum LowInstructionType {
   writeField,
   readField,
   runOp,
+  returnValue,
+  skipLoop,
+  breakLoop,
 }
 
 class LowInstruction {
@@ -369,6 +372,15 @@ class LowInstruction {
           if (push) {
             context.push(result);
           }
+          break;
+        case LowInstructionType.returnValue:
+          context.returnValue(context.pop());
+          break;
+        case LowInstructionType.skipLoop:
+          context.status.status = LowMemoryStatus.continued;
+          break;
+        case LowInstructionType.breakLoop:
+          context.status.status = LowMemoryStatus.broke;
           break;
       }
 

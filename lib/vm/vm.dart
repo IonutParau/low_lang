@@ -55,8 +55,6 @@ class LowVM {
       final cc = LowCompilerContext();
       final compiled = parsed.compile(cc, LowCompilationMode.run);
 
-      print(compiled);
-
       return LowInstruction.runBlock(compiled, parsed.position, context);
     }
     parsed.run(context);

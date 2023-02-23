@@ -63,11 +63,9 @@ class LowForNode extends LowAST {
     final ctx = context.copy();
 
     final startupIR = startup.compile(ctx, mode);
-    final conditionIR = condition.compile(ctx, LowCompilationMode.data);
-    ctx.pop();
-    final execCtx = ctx.copy();
-    final bodyIR = body.compile(execCtx, mode);
-    final stepIR = afterwards.compile(execCtx, LowCompilationMode.run);
+    final conditionIR = condition.compile(ctx.copy(), LowCompilationMode.data);
+    final bodyIR = body.compile(ctx.copy(), mode);
+    final stepIR = afterwards.compile(ctx.copy(), LowCompilationMode.run);
 
     return [
       LowInstruction(

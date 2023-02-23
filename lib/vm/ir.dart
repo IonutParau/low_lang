@@ -194,14 +194,17 @@ class LowInstruction {
           LowInstruction.runBlock(startup, instruction.position, context);
 
           while (context.status.status == LowMemoryStatus.running) {
+            final old = context.size;
             LowInstruction.runBlock(condition, instruction.position, context);
             if (!LowInteropHandler.truthful(
               context,
               instruction.position,
               context.pop(),
             )) break;
+            while (context.size > old) {
+              context.pop();
+            }
 
-            final old = context.size;
             LowInstruction.runBlock(body, caller, context);
             while (context.size > old) {
               context.pop();

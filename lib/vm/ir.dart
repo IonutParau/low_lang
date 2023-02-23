@@ -29,6 +29,7 @@ enum LowInstructionType {
   foreachLoop,
   writeField,
   readField,
+  runOp,
 }
 
 class LowInstruction {
@@ -80,6 +81,7 @@ class LowInstruction {
           }
           argv = argv.reversed.toList();
 
+          context.stackTrace.push(instruction.position);
           final v = lowHandleCall(
             context.pop(),
             argv,
@@ -89,6 +91,7 @@ class LowInstruction {
           if (shouldPush) {
             context.push(v);
           }
+          context.stackTrace.pop();
           break;
         case LowInstructionType.addList:
           final n = instruction.data;
@@ -348,6 +351,24 @@ class LowInstruction {
             owner,
             field,
           ));
+          break;
+        case LowInstructionType.runOp:
+          final value = context.pop();
+          final other = context.pop();
+
+          final String opcode = instruction.data[0];
+          final bool push = instruction.data[1];
+
+          final result = LowInteropHandler.handleOperator(
+            context,
+            instruction.position,
+            value,
+            opcode,
+            [other, if (opcode == "[]=") context.pop()],
+          );
+          if (push) {
+            context.push(result);
+          }
           break;
       }
 

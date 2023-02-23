@@ -9,10 +9,6 @@ void main() {
   vm.loadLibraries();
 
   vm.runCode('''
-static A = 5
-static B = 7
-static C = 9
-
-print(B = C)
+print(5 * 30)
 ''', 'test.low');
 }

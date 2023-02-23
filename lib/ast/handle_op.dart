@@ -161,6 +161,77 @@ class LowHandleOp extends LowAST {
         return [...value, clone, ...toSet];
       }
     }
+    if (opcode == "[]") {
+      if (mode == LowCompilationMode.modify) {
+        final key = params.first.compile(context, LowCompilationMode.data);
+        final owner = left.compile(context, LowCompilationMode.data);
+
+        context.pop();
+        context.pop();
+
+        return [
+          ...key,
+          ...owner,
+          LowInstruction(LowInstructionType.runOp, ["[]=", false], position)
+        ];
+      } else {
+        final key = params.first.compile(context, LowCompilationMode.data);
+        final owner = left.compile(context, LowCompilationMode.data);
+
+        context.pop();
+        if (mode == LowCompilationMode.run) context.pop();
+
+        return [
+          ...key,
+          ...owner,
+          LowInstruction(
+            LowInstructionType.runOp,
+            ["[]", mode == LowCompilationMode.data],
+            position,
+          )
+        ];
+      }
+    }
+    if (mode != LowCompilationMode.modify) {
+      final justCompile = {
+        "+",
+        "-",
+        "/",
+        "~/",
+        "==",
+        "!=",
+        ">=",
+        "<=",
+        ">",
+        "<",
+        "*",
+        "&&",
+        "&",
+        "||",
+        "|",
+        ">>",
+        "<<",
+        "^",
+      };
+
+      if (justCompile.contains(opcode)) {
+        final other = params.first.compile(context, LowCompilationMode.data);
+        final value = left.compile(context, LowCompilationMode.data);
+
+        context.pop();
+        if (mode == LowCompilationMode.run) context.pop();
+
+        return [
+          ...other,
+          ...value,
+          LowInstruction(
+            LowInstructionType.runOp,
+            [opcode, mode == LowCompilationMode.data],
+            position,
+          )
+        ];
+      }
+    }
 
     throw "Unsupported operator $opcode in ${mode.name} mode";
   }

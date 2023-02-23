@@ -192,6 +192,20 @@ class LowHandleOp extends LowAST {
         ];
       }
     }
+    if (opcode == "->") {
+      final value = left;
+      final into = params.first;
+
+      if (into is LowCallValue) {
+        return LowCallValue(into.value, [value, ...into.params], position)
+            .compile(
+          context,
+          mode,
+        );
+      } else {
+        return LowCallValue(into, [value], position).compile(context, mode);
+      }
+    }
     if (mode != LowCompilationMode.modify) {
       final justCompile = {
         "+",

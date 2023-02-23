@@ -9,6 +9,6 @@ void main() {
   vm.loadLibraries();
 
   vm.runCode('''
-print(5 * 30)
+[50, 30] -> print
 ''', 'test.low');
 }

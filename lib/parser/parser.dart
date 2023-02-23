@@ -1011,7 +1011,10 @@ class LowParser {
         final LowAST next = l[i + 1];
         if (next is! LowVariableNode) {
           throw LowParsingFailure(
-              "Field name should be identifier", next.position, lines);
+            "Field name should be identifier",
+            next.position,
+            lines,
+          );
         }
         i++; // Skip next
         nl.add(LowHandleOp(op, last, [next], last.position));

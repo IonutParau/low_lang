@@ -226,6 +226,7 @@ class LowHandleOp extends LowAST {
         ">>",
         "<<",
         "^",
+        "%",
       };
 
       if (justCompile.contains(opcode)) {

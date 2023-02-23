@@ -9,8 +9,10 @@ void main() {
   vm.loadLibraries();
 
   vm.runCode('''
-foreach(element, index in [5, 30, 2]) {
-  print([element, index])
-}
+static A = 5
+static B = 7
+static C = 9
+
+print(B = C)
 ''', 'test.low');
 }

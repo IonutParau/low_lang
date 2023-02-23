@@ -27,6 +27,8 @@ enum LowInstructionType {
   whileLoop,
   forLoop,
   foreachLoop,
+  writeField,
+  readField,
 }
 
 class LowInstruction {
@@ -41,7 +43,8 @@ class LowInstruction {
     return '${type.name} $data $position';
   }
 
-  static dynamic runBlock(List<LowInstruction> instructions, LowTokenPosition caller, LowContext context) {
+  static dynamic runBlock(List<LowInstruction> instructions,
+      LowTokenPosition caller, LowContext context) {
     for (var i = 0; i < instructions.length; i++) {
       final instruction = instructions[i];
 
@@ -134,7 +137,8 @@ class LowInstruction {
           final List<LowInstruction> body = instruction.data[0];
           final List<LowInstruction>? fallback = instruction.data[1];
 
-          if (LowInteropHandler.truthful(context, instruction.position, toCheck)) {
+          if (LowInteropHandler.truthful(
+              context, instruction.position, toCheck)) {
             final old = context.size;
             LowInstruction.runBlock(body, instruction.position, context);
             while (old > context.size) {
@@ -318,6 +322,32 @@ class LowInstruction {
           for (var i = 0; i < c; i++) {
             context.pop();
           }
+          break;
+        case LowInstructionType.writeField:
+          final owner = context.pop();
+          final value = context.pop();
+
+          final String field = instruction.data;
+
+          LowInteropHandler.writeField(
+            context,
+            instruction.position,
+            owner,
+            field,
+            value,
+          );
+
+          break;
+        case LowInstructionType.readField:
+          final owner = context.pop();
+          final String field = instruction.data;
+
+          context.push(LowInteropHandler.readField(
+            context,
+            instruction.position,
+            owner,
+            field,
+          ));
           break;
       }
 

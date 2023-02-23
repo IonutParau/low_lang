@@ -2,6 +2,7 @@ import 'package:low_lang/ast/call.dart';
 import 'package:low_lang/ast/var.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/interop.dart';
+import 'package:low_lang/vm/ir.dart';
 
 import 'ast.dart';
 
@@ -120,5 +121,47 @@ class LowHandleOp extends LowAST {
   @override
   String? markForIgnorance() {
     return null;
+  }
+
+  @override
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
+    if (opcode == ".") {
+      final field = (params.first as LowVariableNode).name;
+      if (mode == LowCompilationMode.modify) {
+        final ownerIR = left.compile(context, LowCompilationMode.data);
+        context.pop();
+
+        return [
+          ...ownerIR,
+          LowInstruction(LowInstructionType.writeField, field, position)
+        ];
+      } else {
+        final ownerIR = left.compile(context, LowCompilationMode.data);
+
+        return [
+          ...ownerIR,
+          LowInstruction(LowInstructionType.readField, field, position)
+        ];
+      }
+    }
+
+    if (opcode == "=") {
+      if (mode == LowCompilationMode.run) {
+        final value = params.first.compile(context, LowCompilationMode.data);
+        final toSet = left.compile(context, LowCompilationMode.modify);
+
+        return [...value, ...toSet];
+      } else if (mode == LowCompilationMode.data) {
+        final value = params.first.compile(context, LowCompilationMode.data);
+        final clone = LowInstruction(LowInstructionType.clone, -1, position);
+        context.push();
+        final toSet = left.compile(context, LowCompilationMode.modify);
+
+        return [...value, clone, ...toSet];
+      }
+    }
+
+    throw "Unsupported operator $opcode in ${mode.name} mode";
   }
 }

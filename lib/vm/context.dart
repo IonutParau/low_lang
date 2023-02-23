@@ -159,4 +159,9 @@ class LowCompilerContext {
   }
 
   int get size => _stackMirror.length;
+
+  @override
+  String toString() {
+    return "LCC($size, $_stackMirror)";
+  }
 }

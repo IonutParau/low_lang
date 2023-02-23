@@ -39,7 +39,9 @@ class LowCodeBody extends LowAST {
       d.addAll(node.handleDependencies(scoped));
 
       // In all of these, the block would always end there, thus anything after that is not a dependency.
-      if (node is LowContinueNode || node is LowBreakNode || node is LowReturnNode) {
+      if (node is LowContinueNode ||
+          node is LowBreakNode ||
+          node is LowReturnNode) {
         break;
       }
 
@@ -55,7 +57,9 @@ class LowCodeBody extends LowAST {
   bool alwaysEnd() {
     for (final node in body) {
       // In all of these, the block would always end there, thus anything after that is not a dependency.
-      if (node is LowContinueNode || node is LowBreakNode || node is LowReturnNode) {
+      if (node is LowContinueNode ||
+          node is LowBreakNode ||
+          node is LowReturnNode) {
         return true;
       }
     }
@@ -69,7 +73,8 @@ class LowCodeBody extends LowAST {
   }
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     if (mode != LowCompilationMode.run) {
       throw "Invalid AST";
     }
@@ -81,7 +86,9 @@ class LowCodeBody extends LowAST {
       instructions.addAll(node.compile(ctx, LowCompilationMode.run));
 
       // In all of these, the block would always end there, thus anything after that is not a dependency.
-      if (node is LowContinueNode || node is LowBreakNode || node is LowReturnNode) {
+      if (node is LowContinueNode ||
+          node is LowBreakNode ||
+          node is LowReturnNode) {
         break;
       }
 

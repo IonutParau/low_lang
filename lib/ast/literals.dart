@@ -28,7 +28,8 @@ class LowIntegerNode extends LowAST {
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     context.push();
     return [LowInstruction(LowInstructionType.addInt, i, position)];
   }
@@ -56,7 +57,8 @@ class LowDoubleNode extends LowAST {
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     context.push();
     return [LowInstruction(LowInstructionType.addDouble, d, position)];
   }
@@ -88,7 +90,8 @@ class LowBoolNode extends LowAST {
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     context.push();
     return [LowInstruction(LowInstructionType.addBool, b, position)];
   }
@@ -116,7 +119,8 @@ class LowStringNode extends LowAST {
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     context.push();
     return [LowInstruction(LowInstructionType.addString, str, position)];
   }
@@ -128,11 +132,13 @@ class LowLambdaFunction extends LowAST {
   LowAST? returnType;
   LowAST body;
 
-  LowLambdaFunction(this.body, this.params, this.types, this.returnType, super.position);
+  LowLambdaFunction(
+      this.body, this.params, this.types, this.returnType, super.position);
 
   @override
   rawget(LowContext context) {
-    return createLowFunction(context, position, params, types, returnType, body, dependencies({}).toList());
+    return createLowFunction(context, position, params, types, returnType, body,
+        dependencies({}).toList());
   }
 
   @override
@@ -148,14 +154,18 @@ class LowLambdaFunction extends LowAST {
   @override
   Set<String> dependencies(Set<String> toIgnore) => {
         ...body.dependencies({...toIgnore, ...params}),
-        ...types.fold<Set<String>>({}, (current, type) => current..addAll(type?.dependencies({...toIgnore, ...params}) ?? {})),
+        ...types.fold<Set<String>>(
+            {},
+            (current, type) => current
+              ..addAll(type?.dependencies({...toIgnore, ...params}) ?? {})),
         ...(returnType?.dependencies(toIgnore) ?? {}),
       };
   @override
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     if (mode == LowCompilationMode.modify) throw "Invalid AST";
     if (mode == LowCompilationMode.run) return [];
     final ctx = LowCompilerContext();
@@ -207,14 +217,17 @@ class LowListNode extends LowAST {
   }
 
   @override
-  Set<String> dependencies(Set<String> toIgnore) => subnodes.fold({}, (curr, node) => curr..addAll(node.dependencies(toIgnore)));
+  Set<String> dependencies(Set<String> toIgnore) => subnodes
+      .fold({}, (curr, node) => curr..addAll(node.dependencies(toIgnore)));
   @override
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     final l = [
-      for (final node in subnodes) ...node.compile(context, LowCompilationMode.data),
+      for (final node in subnodes)
+        ...node.compile(context, LowCompilationMode.data),
       LowInstruction(LowInstructionType.addList, subnodes.length, position),
     ];
 
@@ -256,14 +269,17 @@ class LowBufferNode extends LowAST {
   }
 
   @override
-  Set<String> dependencies(Set<String> toIgnore) => subnodes.fold({}, (curr, node) => curr..addAll(node.dependencies(toIgnore)));
+  Set<String> dependencies(Set<String> toIgnore) => subnodes
+      .fold({}, (curr, node) => curr..addAll(node.dependencies(toIgnore)));
   @override
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     final l = [
-      for (final node in subnodes) ...node.compile(context, LowCompilationMode.data),
+      for (final node in subnodes)
+        ...node.compile(context, LowCompilationMode.data),
       LowInstruction(LowInstructionType.addBuffer, subnodes.length, position),
     ];
 
@@ -303,12 +319,14 @@ class LowMapNode extends LowAST {
   }
 
   @override
-  Set<String> dependencies(Set<String> toIgnore) => [...map.keys, ...map.values].fold({}, (curr, ast) => curr..addAll(ast.dependencies(toIgnore)));
+  Set<String> dependencies(Set<String> toIgnore) => [...map.keys, ...map.values]
+      .fold({}, (curr, ast) => curr..addAll(ast.dependencies(toIgnore)));
   @override
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     final l = <LowInstruction>[];
 
     map.forEach(
@@ -357,12 +375,14 @@ class LowObjectNode extends LowAST {
   }
 
   @override
-  Set<String> dependencies(Set<String> toIgnore) => obj.values.fold({}, (curr, ast) => curr..addAll(ast.dependencies(toIgnore)));
+  Set<String> dependencies(Set<String> toIgnore) => obj.values
+      .fold({}, (curr, ast) => curr..addAll(ast.dependencies(toIgnore)));
   @override
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     final keys = <String>[];
     final inst = <LowInstruction>[];
 
@@ -371,7 +391,8 @@ class LowObjectNode extends LowAST {
       inst.addAll(value.compile(context, LowCompilationMode.data));
     });
 
-    inst.add(LowInstruction(LowInstructionType.addObject, keys, position));
+    inst.add(LowInstruction(
+        LowInstructionType.addObject, keys.reversed.toList(), position));
 
     for (var _ in keys) {
       context.pop();
@@ -402,7 +423,8 @@ class LowNullNode extends LowAST {
   String? markForIgnorance() => null;
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     return [LowInstruction(LowInstructionType.addNull, null, position)];
   }
 }

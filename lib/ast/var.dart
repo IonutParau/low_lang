@@ -34,7 +34,8 @@ class LowVariableNode extends LowAST {
   }
 
   @override
-  List<LowInstruction> compile(LowCompilerContext context, LowCompilationMode mode) {
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
     if (mode == LowCompilationMode.run) return [];
 
     if (mode == LowCompilationMode.data) {
@@ -71,7 +72,7 @@ class LowVariableNode extends LowAST {
                 position,
               ),
             ];
-      context.push();
+      context.pop();
       return inst;
     }
   }

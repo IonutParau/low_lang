@@ -59,7 +59,7 @@ abstract class LowAST {
   }
 
   List<LowInstruction> compile(
-      LowCompilerContext context, LowCompilationMode mode) {
-    throw UnimplementedError("Not yet implemented");
-  }
+    LowCompilerContext context,
+    LowCompilationMode mode,
+  );
 }

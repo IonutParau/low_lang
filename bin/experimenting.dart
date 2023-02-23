@@ -9,6 +9,8 @@ void main() {
   vm.loadLibraries();
 
   vm.runCode('''
-print("Hello, world!")
+static CORE = include "low:core"
+
+CORE.print("Hello, world!")
 ''', 'test.low');
 }

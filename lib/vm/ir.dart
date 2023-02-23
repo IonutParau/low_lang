@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:low_lang/ast/call.dart';
@@ -5,6 +6,8 @@ import 'package:low_lang/parser/token.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/errors.dart';
 import 'package:low_lang/vm/interop.dart';
+import 'package:low_lang/vm/vm.dart';
+import 'package:path/path.dart' as path;
 
 enum LowInstructionType {
   clone,
@@ -33,6 +36,7 @@ enum LowInstructionType {
   returnValue,
   skipLoop,
   breakLoop,
+  include,
 }
 
 class LowInstruction {
@@ -381,6 +385,53 @@ class LowInstruction {
           break;
         case LowInstructionType.breakLoop:
           context.status.status = LowMemoryStatus.broke;
+          break;
+        case LowInstructionType.include:
+          final bool globally = instruction.data[0];
+          final String? identifier = instruction.data[1];
+          final value = context.pop();
+
+          dynamic getLibrary(LowContext context) {
+            var val = LowInteropHandler.convertToString(
+                context, instruction.position, value);
+            if (context.vm.libraries[val] != null) {
+              return context.vm.libraries[val]?.call(context.vm);
+            }
+
+            if (Platform.isWindows) val = val.replaceAll('/', '\\');
+
+            final f = File(path.isAbsolute(val)
+                ? val
+                : path.join(path.dirname(context.filePath), val));
+
+            if (!f.existsSync()) {
+              throw LowRuntimeError(
+                "Included file path $val does not exist",
+                instruction.position,
+                context.stackTrace,
+              );
+            }
+
+            return context.vm.runCode(f.readAsStringSync(), f.path);
+          }
+
+          final lib = getLibrary(context);
+          if (globally) {
+            if (identifier == null) {
+              if (lib is LowObject) {
+                lib.forEach(context.setGlobal);
+              } else {
+                throw LowRuntimeError(
+                  "Unable to globalize included library, as it did not return an object",
+                  instruction.position,
+                  context.stackTrace,
+                );
+              }
+            } else {
+              context.setGlobal(identifier, lib);
+            }
+          }
+          context.push(lib);
           break;
       }
 

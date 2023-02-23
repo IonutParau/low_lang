@@ -3,6 +3,7 @@ import 'package:low_lang/ast/ast.dart';
 import 'package:low_lang/vm/context.dart';
 import 'package:low_lang/vm/errors.dart';
 import 'package:low_lang/vm/interop.dart';
+import 'package:low_lang/vm/ir.dart';
 import 'package:low_lang/vm/vm.dart';
 import 'package:path/path.dart' as path;
 
@@ -19,16 +20,25 @@ class LowIncludeNode extends LowAST {
   LowIncludeNode(this.value, this.mode, this.identifier, super.position);
 
   dynamic getLibrary(LowContext context) {
-    var val = LowInteropHandler.convertToString(context, position, value.get(context));
+    var val = LowInteropHandler.convertToString(
+        context, position, value.get(context));
     if (context.vm.libraries[val] != null) {
       return context.vm.libraries[val]?.call(context.vm);
     }
 
     if (Platform.isWindows) val = val.replaceAll('/', '\\');
 
-    final f = File(path.isAbsolute(val) ? val : path.join(path.dirname(context.filePath), val));
+    final f = File(path.isAbsolute(val)
+        ? val
+        : path.join(path.dirname(context.filePath), val));
 
-    if (!f.existsSync()) throw LowRuntimeError("Included file path $val does not exist", position, context.stackTrace);
+    if (!f.existsSync()) {
+      throw LowRuntimeError(
+        "Included file path $val does not exist",
+        position,
+        context.stackTrace,
+      );
+    }
 
     return context.vm.runCode(f.readAsStringSync(), f.path);
   }
@@ -44,7 +54,11 @@ class LowIncludeNode extends LowAST {
         if (lib is LowObject) {
           lib.forEach(context.setGlobal);
         } else {
-          throw LowRuntimeError("Unable to globalize included library, as it did not return an object", position, context.stackTrace);
+          throw LowRuntimeError(
+            "Unable to globalize included library, as it did not return an object",
+            position,
+            context.stackTrace,
+          );
         }
       } else {
         context.setGlobal(identifier!, lib);
@@ -71,5 +85,22 @@ class LowIncludeNode extends LowAST {
   @override
   String? markForIgnorance() {
     return null;
+  }
+
+  @override
+  List<LowInstruction> compile(
+      LowCompilerContext context, LowCompilationMode mode) {
+    if (mode == LowCompilationMode.modify) throw "LowAST";
+
+    final v = value.compile(context, LowCompilationMode.data);
+
+    return [
+      ...v,
+      LowInstruction(
+        LowInstructionType.include,
+        [this.mode == LowIncludeMode.globals, identifier],
+        position,
+      )
+    ];
   }
 }
